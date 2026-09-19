@@ -1,0 +1,102 @@
+# ==========================================
+# 1. SEGREDOS, CHAVES E VARIÁVEIS DE AMBIENTE
+# ==========================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+secure_keys.yml
+config.yaml
+config.yml
+secrets/
+*.pem
+*.key
+*.cert
+
+# Permite subir arquivos de exemplo (.example)
+!.env.example
+!secure_keys.example.yml
+
+# ==========================================
+# 2. BANCO DE DADOS DEMO DO TCC (SQLite)
+# ==========================================
+# Mantemos o banco de demonstração (900 KB) para que o sistema
+# funcione imediatamente ao clonar com dados de teste e ligas prontas
+!backend/data/smartinvest.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# 3. DADOS PESADOS (> 100MB) E ARQUIVOS BRUTOS
+# (O GitHub bloqueia arquivos maiores de 100MB)
+# ==========================================
+*.parquet
+backend/data/raw/
+*.zip
+*.tar.gz
+*.rar
+*.7z
+ml/archives/*.zip
+
+# ==========================================
+# 4. PYTHON & AMBIENTES VIRTUAIS
+# ==========================================
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# ==========================================
+# 5. FRONTEND & NODE.JS
+# ==========================================
+node_modules/
+frontend/node_modules/
+.output/
+frontend/.output/
+dist/
+frontend/dist/
+.nitro/
+frontend/.nitro/
+.wrangler/
+frontend/.wrangler/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# 6. SISTEMA OPERACIONAL & EDITORES (IDE)
+# ==========================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo

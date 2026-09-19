@@ -1,0 +1,5 @@
+# Configurações de chaves de API (opcional se configurado via .env)
+# NUNCA suba o arquivo secure_keys.yml com chaves reais para o GitHub!
+apis:
+  news_api_key: "sua_chave_newsapi_aqui"
+  openrouter_api_key: "sua_chave_openrouter_aqui"

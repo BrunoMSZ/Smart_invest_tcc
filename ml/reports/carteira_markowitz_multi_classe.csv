@@ -1,0 +1,8 @@
+﻿Classe,Ativo,Peso_Final,Justificativa
+Renda Fixa,Caixa (CDI),20.00%,Colchão de liquidez institucional e proteção macro
+Ação,GMAT3,21.82%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
+Ação,USIM3,0.06%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
+Ação,RAIZ4,18.13%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
+Fundo Imobiliário (FII),IGTI11,18.09%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
+Fundo Imobiliário (FII),LVOL11,0.51%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
+Fundo Imobiliário (FII),CPTS11,21.39%,Otimizado via Fronteira Eficiente (Sharpe Max: 1.0363)
