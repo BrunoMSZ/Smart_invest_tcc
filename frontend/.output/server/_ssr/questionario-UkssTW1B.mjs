@@ -1,0 +1,225 @@
+import { i as __toESM } from "../_runtime.mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
+import { o as require_jsx_runtime } from "../_libs/@radix-ui/react-collection+[...].mjs";
+import { F as LoaderCircle, ot as BrainCircuit, ut as ArrowRight } from "../_libs/lucide-react.mjs";
+import { v as useNavigate } from "../_libs/@tanstack/react-router+[...].mjs";
+import { n as toast } from "../_libs/sonner.mjs";
+import { m as cn, n as api, p as Button } from "./router-B3F8OG1u2.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/questionario-UkssTW1B.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var import_jsx_runtime = require_jsx_runtime();
+function QuestionarioPage() {
+	const navigate = useNavigate();
+	const [loading, setLoading] = (0, import_react.useState)(false);
+	const [q1, setQ1] = (0, import_react.useState)(0);
+	const [q2, setQ2] = (0, import_react.useState)(0);
+	const [q3, setQ3] = (0, import_react.useState)(0);
+	const isFormComplete = q1 > 0 && q2 > 0 && q3 > 0;
+	const handleEnviarQuestionario = async (e) => {
+		e.preventDefault();
+		if (!isFormComplete) return;
+		setLoading(true);
+		const pontuacaoTotal = q1 + q2 + q3;
+		const riscoCalculado = Math.max(1, Math.round(pontuacaoTotal / 15 * 10));
+		try {
+			const res = await api.enviarQuestionario({
+				idade: 30,
+				renda_mensal: 5e3,
+				respostas_risco: riscoCalculado
+			});
+			toast.success("Perfil classificado com sucesso!", { description: `O seu perfil ideal é: ${res.nome_perfil}.` });
+			localStorage.setItem("user_perfil", res.nome_perfil);
+			navigate({ to: "/" });
+		} catch (err) {
+			toast.error(err.message || "Erro ao salvar questionário. Tente novamente.");
+		} finally {
+			setLoading(false);
+		}
+	};
+	const answeredCount = (q1 > 0 ? 1 : 0) + (q2 > 0 ? 1 : 0) + (q3 > 0 ? 1 : 0);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex min-h-screen items-center justify-center bg-background px-4 py-12 relative overflow-hidden",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "w-full max-w-2xl space-y-8 relative z-10",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "text-center",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mx-auto mb-3 flex justify-center",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: "/logo.png",
+								alt: "Liquid Invest Logo",
+								className: "h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(252,91,63,0.3)]"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary mb-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BrainCircuit, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Liquid SmartInvest · Suitability & Perfil" })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+							className: "text-2xl font-black tracking-tight text-foreground sm:text-3xl",
+							children: "Análise de Perfil de Investidor"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-muted-foreground max-w-lg mx-auto",
+							children: "Responda a estas 3 perguntas objetivas para calibrar os modelos de Markowitz e XGBoost de acordo com a sua tolerância a risco."
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-4 flex items-center justify-center gap-3 max-w-xs mx-auto",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "h-1.5 flex-1 bg-surface-2 rounded-full overflow-hidden",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "h-full bg-primary transition-all duration-300",
+									style: { width: `${answeredCount / 3 * 100}%` }
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "text-xs font-bold text-primary",
+								children: [answeredCount, "/3"]
+							})]
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					onSubmit: handleEnviarQuestionario,
+					className: "space-y-6",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "surface-card p-5 sm:p-6 space-y-4 border-border/80",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+								className: "flex items-center gap-2 text-sm sm:text-base font-bold text-foreground",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black",
+									children: "1"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Qual é o seu horizonte de tempo com os investimentos?" })]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "grid gap-3 sm:grid-cols-3",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 1,
+										current: q1,
+										onClick: setQ1,
+										label: "Curto Prazo",
+										desc: "Menos de 1 ano (Ex: Reserva de emergência)"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 3,
+										current: q1,
+										onClick: setQ1,
+										label: "Médio Prazo",
+										desc: "De 1 a 5 anos (Ex: Projetos patrimoniais)"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 5,
+										current: q1,
+										onClick: setQ1,
+										label: "Longo Prazo",
+										desc: "Mais de 5 anos (Ex: Renda passiva e aposentadoria)"
+									})
+								]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "surface-card p-5 sm:p-6 space-y-4 border-border/80",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+								className: "flex items-center gap-2 text-sm sm:text-base font-bold text-foreground",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black",
+									children: "2"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Como você reage se seus investimentos caírem 20% em um mês?" })]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "grid gap-3 sm:grid-cols-3",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 1,
+										current: q2,
+										onClick: setQ2,
+										label: "Vendo tudo",
+										desc: "Não tolero volatilidade de curto prazo."
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 3,
+										current: q2,
+										onClick: setQ2,
+										label: "Aguardar",
+										desc: "Fico cauteloso, mas espero a recuperação."
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 5,
+										current: q2,
+										onClick: setQ2,
+										label: "Aportar mais",
+										desc: "Enxergo como desconto e compro mais cotas."
+									})
+								]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "surface-card p-5 sm:p-6 space-y-4 border-border/80",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
+								className: "flex items-center gap-2 text-sm sm:text-base font-bold text-foreground",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black",
+									children: "3"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Qual o seu nível de experiência no mercado financeiro?" })]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "grid gap-3 sm:grid-cols-3",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 1,
+										current: q3,
+										onClick: setQ3,
+										label: "Iniciante",
+										desc: "Renda Fixa, Selic e Tesouro Direto."
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 3,
+										current: q3,
+										onClick: setQ3,
+										label: "Intermediário",
+										desc: "Fundos Imobiliários (FIIs) e ETFs."
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(OptionCard, {
+										value: 5,
+										current: q3,
+										onClick: setQ3,
+										label: "Avançado",
+										desc: "Ações B3, Derivativos e Criptoativos."
+									})
+								]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							type: "submit",
+							className: "w-full h-12 text-base font-bold gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20",
+							disabled: !isFormComplete || loading,
+							children: [loading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "h-5 w-5 animate-spin" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowRight, { className: "h-5 w-5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: loading ? "Processando seu perfil via IA..." : "Concluir Perfil & Ativar Carteira" })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-center text-[11px] text-muted-foreground",
+							children: "Conforme a Resolução CVM 30/35 e padrões de alocação de risco da BlackRock e CFA Institute."
+						})
+					]
+				})]
+			})
+		]
+	});
+}
+function OptionCard({ value, current, onClick, label, desc }) {
+	const isSelected = current === value;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+		type: "button",
+		onClick: () => onClick(value),
+		className: cn("flex flex-col items-start text-left p-4 rounded-xl border transition-all duration-200", isSelected ? "border-primary bg-primary/10 shadow-sm" : "border-border bg-surface-2/30 hover:bg-surface-2 hover:border-primary/50"),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: cn("font-semibold text-sm", isSelected ? "text-primary" : "text-foreground"),
+			children: label
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "text-xs text-muted-foreground mt-1",
+			children: desc
+		})]
+	});
+}
+//#endregion
+export { QuestionarioPage as component };

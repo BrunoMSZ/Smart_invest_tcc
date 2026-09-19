@@ -1,0 +1,122 @@
+import { i as __toESM } from "../_runtime.mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
+import { o as require_jsx_runtime } from "../_libs/@radix-ui/react-collection+[...].mjs";
+import { D as Newspaper, F as LoaderCircle, p as Sparkles } from "../_libs/lucide-react.mjs";
+import { u as news } from "./router-B3F8OG1u.mjs";
+import { m as cn } from "./router-B3F8OG1u2.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/noticias-DZbOFnS3.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var import_jsx_runtime = require_jsx_runtime();
+var filters = [
+	"Todas",
+	"Positivo",
+	"Neutro",
+	"Negativo"
+];
+var sentimentClass = {
+	Positivo: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+	Neutro: "bg-surface-2 text-muted-foreground border-border",
+	Negativo: "bg-rose-500/15 text-rose-400 border-rose-500/30"
+};
+function NewsPage() {
+	const [filter, setFilter] = (0, import_react.useState)("Todas");
+	const [newsList, setNewsList] = (0, import_react.useState)(news);
+	const [loading, setLoading] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		setLoading(true);
+		fetch("http://localhost:8000/api/news").then((res) => {
+			if (!res.ok) throw new Error("Erro API");
+			return res.json();
+		}).then((data) => {
+			if (Array.isArray(data) && data.length > 0) {
+				const formatted = data.map((item, i) => ({
+					id: item.id || String(i),
+					title: item.titulo || item.title,
+					source: item.fonte || item.source || "Mercado B3",
+					time: item.data || item.time || "Hoje",
+					sentiment: item.sentiment || "Neutro",
+					summary: item.summary || item.titulo
+				}));
+				setNewsList(formatted);
+			}
+		}).catch(() => {}).finally(() => setLoading(false));
+	}, []);
+	const list = filter === "Todas" ? newsList : newsList.filter((n) => n.sentiment === filter);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto w-full max-w-4xl space-y-6",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "surface-card p-6 border-border/80",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary mb-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "FinBERT NLP · Sentimento em Tempo Real" })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+							className: "text-2xl font-black sm:text-3xl tracking-tight text-foreground",
+							children: "Notícias & Radar de Mercado"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-muted-foreground",
+							children: "Manchetes financeiras monitoradas e classificadas com inteligência artificial para antecipar movimentos de mercado."
+						})
+					] }), loading && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2/60 px-3 py-1.5 rounded-xl border border-white/5",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "h-4 w-4 animate-spin text-primary" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Sincronizando feeds..." })]
+					})]
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-wrap items-center gap-2",
+				children: filters.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: () => setFilter(f),
+					className: cn("rounded-xl px-4 py-2 text-xs font-bold transition-all", filter === f ? "bg-primary text-white shadow-md shadow-primary/25" : "border border-border bg-surface-2/60 text-muted-foreground hover:bg-surface-2 hover:text-foreground"),
+					children: f
+				}, f))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "space-y-3.5",
+				children: list.map((n) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+					className: "surface-card p-5 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg border-border/80",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-w-0",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center gap-2 text-xs text-muted-foreground mb-1",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-semibold text-primary/90",
+										children: n.source
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "•" }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: n.time })
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "text-base font-bold leading-snug text-foreground",
+								children: n.title
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: cn("shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border", sentimentClass[n.sentiment] || sentimentClass.Neutro),
+							children: n.sentiment
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2.5 text-sm leading-relaxed text-muted-foreground",
+						children: n.summary
+					})]
+				}, n.id))
+			}),
+			list.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "surface-card flex flex-col items-center gap-2 p-12 text-center border-border/80",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Newspaper, { className: "h-8 w-8 text-muted-foreground/60" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-sm font-medium text-muted-foreground",
+					children: "Nenhuma notícia encontrada com o filtro selecionado."
+				})]
+			})
+		]
+	});
+}
+//#endregion
+export { NewsPage as component };
