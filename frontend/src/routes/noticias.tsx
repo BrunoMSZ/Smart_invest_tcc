@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Newspaper, Loader2, Sparkles } from "lucide-react";
 import { news as mockNews, type Sentiment } from "@/lib/mock-data";
+import { getApiBase } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,7 @@ function NewsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:8000/api/news")
+    fetch(`${getApiBase()}/api/news`)
       .then((res) => {
         if (!res.ok) throw new Error("Erro API");
         return res.json();

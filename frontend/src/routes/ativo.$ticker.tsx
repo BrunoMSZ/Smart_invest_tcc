@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { ArrowLeft, Sparkles, TrendingDown, TrendingUp, Bot, Newspaper, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getApiBase } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { assets, priceSeries } from "@/lib/mock-data";
@@ -49,7 +50,7 @@ function AssetPage() {
     let isMounted = true;
     setLoading(true);
 
-    fetch(`http://localhost:8000/api/analyze/${ticker}`)
+    fetch(`${getApiBase()}/api/analyze/${ticker}`)
       .then((res) => {
         if (!res.ok) throw new Error("Erro na API");
         return res.json();

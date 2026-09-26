@@ -12,14 +12,19 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as ConfigRouteImport } from './routes/config'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as GruposRouteImport } from './routes/grupos'
+import { Route as InicioRouteImport } from './routes/inicio'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MercadoRouteImport } from './routes/mercado'
 import { Route as NoticiasRouteImport } from './routes/noticias'
 import { Route as QuestionarioRouteImport } from './routes/questionario'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SmartInvestRouteImport } from './routes/smart-invest'
+import { Route as TesesRouteImport } from './routes/teses'
 import { Route as AtivoTickerRouteImport } from './routes/ativo.$ticker'
+import { Route as UUserIdRouteImport } from './routes/u.$userId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,9 +41,24 @@ const ChatRoute = ChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfigRoute = ConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GruposRoute = GruposRouteImport.update({
   id: '/grupos',
   path: '/grupos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InicioRoute = InicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -71,9 +91,19 @@ const SmartInvestRoute = SmartInvestRouteImport.update({
   path: '/smart-invest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TesesRoute = TesesRouteImport.update({
+  id: '/teses',
+  path: '/teses',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AtivoTickerRoute = AtivoTickerRouteImport.update({
   id: '/ativo/$ticker',
   path: '/ativo/$ticker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUserIdRoute = UUserIdRouteImport.update({
+  id: '/u/$userId',
+  path: '/u/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -81,41 +111,56 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/chat': typeof ChatRoute
+  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/grupos': typeof GruposRoute
+  '/inicio': typeof InicioRoute
   '/login': typeof LoginRoute
   '/mercado': typeof MercadoRoute
   '/noticias': typeof NoticiasRoute
   '/questionario': typeof QuestionarioRoute
   '/ranking': typeof RankingRoute
   '/smart-invest': typeof SmartInvestRoute
+  '/teses': typeof TesesRoute
   '/ativo/$ticker': typeof AtivoTickerRoute
+  '/u/$userId': typeof UUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/chat': typeof ChatRoute
+  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/grupos': typeof GruposRoute
+  '/inicio': typeof InicioRoute
   '/login': typeof LoginRoute
   '/mercado': typeof MercadoRoute
   '/noticias': typeof NoticiasRoute
   '/questionario': typeof QuestionarioRoute
   '/ranking': typeof RankingRoute
   '/smart-invest': typeof SmartInvestRoute
+  '/teses': typeof TesesRoute
   '/ativo/$ticker': typeof AtivoTickerRoute
+  '/u/$userId': typeof UUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/carteira': typeof CarteiraRoute
   '/chat': typeof ChatRoute
+  '/config': typeof ConfigRoute
+  '/dashboard': typeof DashboardRoute
   '/grupos': typeof GruposRoute
+  '/inicio': typeof InicioRoute
   '/login': typeof LoginRoute
   '/mercado': typeof MercadoRoute
   '/noticias': typeof NoticiasRoute
   '/questionario': typeof QuestionarioRoute
   '/ranking': typeof RankingRoute
   '/smart-invest': typeof SmartInvestRoute
+  '/teses': typeof TesesRoute
   '/ativo/$ticker': typeof AtivoTickerRoute
+  '/u/$userId': typeof UUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,54 +168,74 @@ export interface FileRouteTypes {
     | '/'
     | '/carteira'
     | '/chat'
+    | '/config'
+    | '/dashboard'
     | '/grupos'
+    | '/inicio'
     | '/login'
     | '/mercado'
     | '/noticias'
     | '/questionario'
     | '/ranking'
     | '/smart-invest'
+    | '/teses'
     | '/ativo/$ticker'
+    | '/u/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/carteira'
     | '/chat'
+    | '/config'
+    | '/dashboard'
     | '/grupos'
+    | '/inicio'
     | '/login'
     | '/mercado'
     | '/noticias'
     | '/questionario'
     | '/ranking'
     | '/smart-invest'
+    | '/teses'
     | '/ativo/$ticker'
+    | '/u/$userId'
   id:
     | '__root__'
     | '/'
     | '/carteira'
     | '/chat'
+    | '/config'
+    | '/dashboard'
     | '/grupos'
+    | '/inicio'
     | '/login'
     | '/mercado'
     | '/noticias'
     | '/questionario'
     | '/ranking'
     | '/smart-invest'
+    | '/teses'
     | '/ativo/$ticker'
+    | '/u/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CarteiraRoute: typeof CarteiraRoute
   ChatRoute: typeof ChatRoute
+  ConfigRoute: typeof ConfigRoute
+  DashboardRoute: typeof DashboardRoute
   GruposRoute: typeof GruposRoute
+  InicioRoute: typeof InicioRoute
   LoginRoute: typeof LoginRoute
   MercadoRoute: typeof MercadoRoute
   NoticiasRoute: typeof NoticiasRoute
   QuestionarioRoute: typeof QuestionarioRoute
   RankingRoute: typeof RankingRoute
   SmartInvestRoute: typeof SmartInvestRoute
+  TesesRoute: typeof TesesRoute
   AtivoTickerRoute: typeof AtivoTickerRoute
+  UUserIdRoute: typeof UUserIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -196,11 +261,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/config': {
+      id: '/config'
+      path: '/config'
+      fullPath: '/config'
+      preLoaderRoute: typeof ConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/grupos': {
       id: '/grupos'
       path: '/grupos'
       fullPath: '/grupos'
       preLoaderRoute: typeof GruposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inicio': {
+      id: '/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof InicioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -245,11 +331,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SmartInvestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teses': {
+      id: '/teses'
+      path: '/teses'
+      fullPath: '/teses'
+      preLoaderRoute: typeof TesesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ativo/$ticker': {
       id: '/ativo/$ticker'
       path: '/ativo/$ticker'
       fullPath: '/ativo/$ticker'
       preLoaderRoute: typeof AtivoTickerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$userId': {
+      id: '/u/$userId'
+      path: '/u/$userId'
+      fullPath: '/u/$userId'
+      preLoaderRoute: typeof UUserIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -259,14 +359,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CarteiraRoute: CarteiraRoute,
   ChatRoute: ChatRoute,
+  ConfigRoute: ConfigRoute,
+  DashboardRoute: DashboardRoute,
   GruposRoute: GruposRoute,
+  InicioRoute: InicioRoute,
   LoginRoute: LoginRoute,
   MercadoRoute: MercadoRoute,
   NoticiasRoute: NoticiasRoute,
   QuestionarioRoute: QuestionarioRoute,
   RankingRoute: RankingRoute,
   SmartInvestRoute: SmartInvestRoute,
+  TesesRoute: TesesRoute,
   AtivoTickerRoute: AtivoTickerRoute,
+  UUserIdRoute: UUserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

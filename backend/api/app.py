@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -22,7 +23,7 @@ try:
     from backend.config import BASE_DIR, MODELS_DIR, DATA_DIR, OPENROUTER_API_KEY, OPENROUTER_FREE_MODELS
     from backend.database import (
         init_db, get_db,
-        User, Questionario, CarteiraItem, Post, PostLike, Comentario, Grupo, ChatLog, GrupoMensagem,
+        User, Questionario, CarteiraItem, Post, PostLike, Comentario, ComentarioLike, Seguir, Notificacao, Grupo, ChatLog, GrupoMensagem,
         hash_password, verify_password, create_access_token, decode_access_token
     )
     from backend.services.openrouter_service import openrouter_service
@@ -37,7 +38,7 @@ except ImportError:
     from config import BASE_DIR, MODELS_DIR, DATA_DIR, OPENROUTER_API_KEY, OPENROUTER_FREE_MODELS
     from database import (
         init_db, get_db,
-        User, Questionario, CarteiraItem, Post, PostLike, Comentario, Grupo, ChatLog, GrupoMensagem,
+        User, Questionario, CarteiraItem, Post, PostLike, Comentario, ComentarioLike, Seguir, Notificacao, Grupo, ChatLog, GrupoMensagem,
         hash_password, verify_password, create_access_token, decode_access_token
     )
     from services.openrouter_service import openrouter_service
@@ -101,6 +102,9 @@ def format_user_response(user: User) -> Dict[str, Any]:
         "idade": user.idade,
         "patrimonio_estimado": user.patrimonio_estimado,
         "avatar_url": user.avatar_url,
+        "capa_url": getattr(user, "capa_url", None),
+        "bio": getattr(user, "bio", None),
+        "presenca": getattr(user, "presenca", None) or "disponivel",
         "points": user.pontos,
         "level": user.nivel,
         "levelName": user.nivel_nome,
@@ -123,6 +127,11 @@ class LoginRequest(BaseModel):
     senha: str = Field(..., description="Senha do usuário")
 
 
+class RecoverPasswordRequest(BaseModel):
+    email: str = Field(..., description="E-mail da conta")
+    nova_senha: str = Field(..., min_length=6, description="Nova senha")
+
+
 class RegisterRequest(BaseModel):
     nome: str = Field(..., description="Nome completo")
     email: str = Field(..., description="E-mail de cadastro")
@@ -134,10 +143,15 @@ class RegisterRequest(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     nome: Optional[str] = None
+    handle: Optional[str] = None
     idade: Optional[int] = None
     renda_mensal: Optional[float] = None
     perfil_investidor: Optional[str] = None
     patrimonio_estimado: Optional[float] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    capa_url: Optional[str] = None
+    presenca: Optional[str] = None
     notificacoes_email: Optional[bool] = None
     alertas_volatilidade: Optional[bool] = None
 
@@ -191,9 +205,20 @@ class PostCreateRequest(BaseModel):
     tag: Optional[str] = "Aporte"
     comprovante: Optional[bool] = False
     comprovante_url: Optional[str] = None
+    shared_from_post_id: Optional[int] = None
+
+
+class PostShareRequest(BaseModel):
+    comentario: Optional[str] = None
+    tag: Optional[str] = None
 
 
 class ComentarioCreateRequest(BaseModel):
+    conteudo: str = Field(..., min_length=1)
+    parent_id: Optional[int] = None
+
+
+class ComentarioUpdateRequest(BaseModel):
     conteudo: str = Field(..., min_length=1)
 
 
@@ -291,6 +316,26 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
+@app.post("/api/auth/recover")
+def recover_password(req: RecoverPasswordRequest, db: Session = Depends(get_db)):
+    """Redefine a senha de uma conta existente a partir do e-mail."""
+    email_limpo = req.email.lower().strip()
+    user = db.query(User).filter(User.email == email_limpo).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Não encontramos uma conta com esse e-mail.")
+
+    nova = req.nova_senha.strip()
+    if len(nova) < 6:
+        raise HTTPException(status_code=400, detail="A nova senha precisa ter pelo menos 6 caracteres.")
+
+    user.senha_hash = hash_password(nova)
+    db.commit()
+    return {
+        "status": "sucesso",
+        "message": "Senha redefinida. Você já pode entrar com a nova senha.",
+    }
+
+
 @app.get("/api/auth/me")
 @app.get("/api/profile")
 def get_profile(
@@ -325,7 +370,26 @@ def update_profile(
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
     if req.nome is not None:
-        current_user.nome = req.nome.strip()
+        nome = req.nome.strip()
+        if not nome:
+            raise HTTPException(status_code=400, detail="Nome não pode ser vazio.")
+        current_user.nome = nome
+        partes = nome.split()
+        current_user.initials = "".join([p[0].upper() for p in partes[:2]]) if partes else "US"
+    if req.handle is not None:
+        handle = req.handle.strip().replace(" ", "")
+        if not handle.startswith("@"):
+            handle = "@" + handle
+        handle = "@" + handle[1:].lower()
+        if not re.match(r"^@[a-z0-9._]{2,39}$", handle):
+            raise HTTPException(
+                status_code=400,
+                detail="Arroba inválido. Use 2–39 caracteres (letras, números, . ou _)."
+            )
+        existe = db.query(User).filter(User.handle == handle, User.id != current_user.id).first()
+        if existe:
+            raise HTTPException(status_code=409, detail="Este @ já está em uso.")
+        current_user.handle = handle
     if req.idade is not None:
         current_user.idade = req.idade
     if req.renda_mensal is not None:
@@ -334,6 +398,16 @@ def update_profile(
         current_user.perfil_investidor = req.perfil_investidor
     if req.patrimonio_estimado is not None:
         current_user.patrimonio_estimado = req.patrimonio_estimado
+    if req.bio is not None:
+        current_user.bio = req.bio.strip() if req.bio else None
+    if req.avatar_url is not None:
+        current_user.avatar_url = req.avatar_url if req.avatar_url else None
+    if req.capa_url is not None:
+        current_user.capa_url = req.capa_url if req.capa_url else None
+    if req.presenca is not None:
+        if req.presenca not in {"disponivel", "ausente", "ocupado", "invisivel"}:
+            raise HTTPException(status_code=400, detail="Status inválido.")
+        current_user.presenca = req.presenca
     if req.notificacoes_email is not None:
         current_user.notificacoes_email = req.notificacoes_email
     if req.alertas_volatilidade is not None:
@@ -645,36 +719,88 @@ def remover_item_carteira(
 # COMUNIDADE, POSTS, LIKES E GRUPOS
 # ==========================================
 
-@app.get("/api/posts")
-def listar_posts(db: Session = Depends(get_db)):
-    """Retorna os posts da comunidade em ordem cronológica reversa."""
-    posts = db.query(Post).order_by(Post.data_criacao.desc()).all()
-    resultado = []
-    for p in posts:
-        # Formatar tempo relativo
-        diff = datetime.utcnow() - p.data_criacao
-        if diff.total_seconds() < 3600:
-            time_str = f"{max(int(diff.total_seconds() // 60), 1)} min"
-        elif diff.total_seconds() < 86400:
-            time_str = f"{int(diff.total_seconds() // 3600)} h"
-        else:
-            time_str = f"{int(diff.total_seconds() // 86400)} d"
+def _format_post_time(data_criacao: datetime) -> str:
+    diff = datetime.utcnow() - data_criacao
+    if diff.total_seconds() < 3600:
+        return f"{max(int(diff.total_seconds() // 60), 1)} min"
+    if diff.total_seconds() < 86400:
+        return f"{int(diff.total_seconds() // 3600)} h"
+    return f"{int(diff.total_seconds() // 86400)} d"
 
-        resultado.append({
-            "id": str(p.id),
-            "author": p.autor_nome,
-            "initials": p.autor_initials,
-            "handle": p.autor_handle,
-            "time": time_str,
-            "badge": p.autor_badge,
-            "content": p.conteudo,
-            "proof": p.comprovante,
-            "proof_url": p.comprovante_url,
-            "likes": p.likes,
-            "comments": p.comentarios_count,
-            "tag": p.tag
-        })
-    return resultado
+
+def _notificar(db: Session, destinatario_id: Optional[int], autor_id: Optional[int], tipo: str, post_id: Optional[int] = None):
+    if not destinatario_id or not autor_id or destinatario_id == autor_id:
+        return
+    db.add(Notificacao(
+        user_id=destinatario_id,
+        actor_id=autor_id,
+        tipo=tipo,
+        post_id=post_id,
+        lida=False,
+    ))
+
+
+def _format_comment_time(data_criacao: Optional[datetime]) -> str:
+    if not data_criacao:
+        return "agora"
+    diff = datetime.utcnow() - data_criacao
+    seconds = diff.total_seconds()
+    if seconds < 60:
+        return "agora"
+    if seconds < 3600:
+        return f"{max(int(seconds // 60), 1)}min"
+    if seconds < 86400:
+        return f"{int(seconds // 3600)}h"
+    return f"{int(seconds // 86400)}d"
+
+
+def _serialize_post(p: Post, db: Session, include_shared: bool = True, following_ids=None) -> Dict[str, Any]:
+    item: Dict[str, Any] = {
+        "id": str(p.id),
+        "user_id": p.user_id,
+        "author": p.autor_nome,
+        "author_avatar": None,
+        "is_following": bool(following_ids and p.user_id in following_ids),
+        "initials": p.autor_initials,
+        "handle": p.autor_handle,
+        "time": _format_post_time(p.data_criacao),
+        "badge": p.autor_badge,
+        "content": p.conteudo,
+        "proof": p.comprovante,
+        "proof_url": p.comprovante_url,
+        "likes": p.likes,
+        "comments": p.comentarios_count,
+        "tag": p.tag,
+        "shared_from_post_id": p.shared_from_post_id,
+        "shared_post": None,
+    }
+    if p.user_id:
+        autor = db.query(User).filter(User.id == p.user_id).first()
+        if autor and autor.avatar_url:
+            item["author_avatar"] = autor.avatar_url
+    if include_shared and p.shared_from_post_id:
+        original = db.query(Post).filter(Post.id == p.shared_from_post_id).first()
+        if original:
+            # Evita nestar compartilhamentos em cascata
+            nested = _serialize_post(original, db, include_shared=False, following_ids=following_ids)
+            item["shared_post"] = nested
+    return item
+
+
+@app.get("/api/posts")
+def listar_posts(
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Retorna os posts da comunidade em ordem cronológica reversa."""
+    following_ids = set()
+    if current_user:
+        following_ids = {
+            row[0]
+            for row in db.query(Seguir.following_id).filter(Seguir.follower_id == current_user.id).all()
+        }
+    posts = db.query(Post).order_by(Post.data_criacao.desc()).all()
+    return [_serialize_post(p, db, following_ids=following_ids) for p in posts]
 
 
 @app.post("/api/posts")
@@ -687,6 +813,15 @@ def criar_post(
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
+    shared_from_id = req.shared_from_post_id
+    if shared_from_id:
+        original = db.query(Post).filter(Post.id == shared_from_id).first()
+        if not original:
+            raise HTTPException(status_code=404, detail="Post original não encontrado.")
+        # Se o original já é um share, aponta para a raiz
+        if original.shared_from_post_id:
+            shared_from_id = original.shared_from_post_id
+
     novo_post = Post(
         user_id=current_user.id,
         autor_nome=current_user.nome,
@@ -698,7 +833,8 @@ def criar_post(
         comprovante=req.comprovante or False,
         comprovante_url=req.comprovante_url,
         likes=0,
-        comentarios_count=0
+        comentarios_count=0,
+        shared_from_post_id=shared_from_id,
     )
     db.add(novo_post)
 
@@ -716,7 +852,58 @@ def criar_post(
         "status": "sucesso",
         "message": "Post publicado com sucesso",
         "post_id": novo_post.id,
-        "pontos_totais": current_user.pontos
+        "pontos_totais": current_user.pontos,
+        "post": _serialize_post(novo_post, db),
+    }
+
+
+@app.post("/api/posts/{post_id}/share")
+def compartilhar_post(
+    post_id: int,
+    req: PostShareRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Reposta um post no feed (com comentário opcional), estilo rede social."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+
+    original = db.query(Post).filter(Post.id == post_id).first()
+    if not original:
+        raise HTTPException(status_code=404, detail="Post não encontrado.")
+
+    root_id = original.shared_from_post_id or original.id
+    root = db.query(Post).filter(Post.id == root_id).first() or original
+
+    comentario = (req.comentario or "").strip()
+    tag = req.tag or root.tag or "Aporte"
+    # Conteúdo: se não houver comentário, marca como compartilhamento puro
+    conteudo = comentario if comentario else f"Compartilhou a publicação de {root.autor_nome}"
+
+    novo_post = Post(
+        user_id=current_user.id,
+        autor_nome=current_user.nome,
+        autor_handle=current_user.handle,
+        autor_initials=current_user.initials,
+        autor_badge=f"Nível {current_user.nivel} · {current_user.badge}",
+        conteudo=conteudo,
+        tag=tag,
+        comprovante=False,
+        comprovante_url=None,
+        likes=0,
+        comentarios_count=0,
+        shared_from_post_id=root.id,
+    )
+    db.add(novo_post)
+    _notificar(db, root.user_id, current_user.id, "compartilhamento", root.id)
+    db.commit()
+    db.refresh(novo_post)
+
+    return {
+        "status": "sucesso",
+        "message": "Publicação compartilhada no feed",
+        "post_id": novo_post.id,
+        "post": _serialize_post(novo_post, db),
     }
 
 
@@ -746,26 +933,59 @@ def toggle_like_post(
         db.add(novo_like)
         post.likes += 1
         liked = True
+        _notificar(db, post.user_id, user_id, "reacao", post.id)
 
     db.commit()
     return {"status": "sucesso", "likes": post.likes, "liked": liked}
 
 
 @app.get("/api/posts/{post_id}/comments")
-def listar_comentarios(post_id: int, db: Session = Depends(get_db)):
+def listar_comentarios(
+    post_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
     """Retorna todos os comentários de uma postagem específica."""
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado.")
 
-    comentarios = db.query(Comentario).filter(Comentario.post_id == post_id).all()
-    
+    comentarios = (
+        db.query(Comentario)
+        .filter(Comentario.post_id == post_id)
+        .order_by(Comentario.data_criacao.asc())
+        .all()
+    )
+    user_id = current_user.id if current_user else None
+    liked_ids = set()
+    if user_id and comentarios:
+        ids = [c.id for c in comentarios]
+        liked_ids = {
+            row.comment_id
+            for row in db.query(ComentarioLike).filter(
+                ComentarioLike.user_id == user_id,
+                ComentarioLike.comment_id.in_(ids),
+            ).all()
+        }
+
+    autores = {}
+    autor_ids = {c.user_id for c in comentarios if c.user_id}
+    if autor_ids:
+        for u in db.query(User).filter(User.id.in_(autor_ids)).all():
+            autores[u.id] = u
+
     return [
         {
             "id": c.id,
+            "user_id": c.user_id,
             "autor_nome": c.autor_nome,
             "autor_initials": c.autor_initials,
-            "conteudo": c.conteudo
+            "autor_avatar": autores[c.user_id].avatar_url if c.user_id in autores else None,
+            "conteudo": c.conteudo,
+            "parent_id": c.parent_id,
+            "time": _format_comment_time(c.data_criacao),
+            "likes": c.likes or 0,
+            "liked": c.id in liked_ids,
         }
         for c in comentarios
     ]
@@ -783,18 +1003,254 @@ def adicionar_comentario(
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado.")
 
+    parent_id = None
+    if req.parent_id:
+        pai = db.query(Comentario).filter(
+            Comentario.id == req.parent_id,
+            Comentario.post_id == post_id,
+        ).first()
+        if pai:
+            parent_id = pai.parent_id or pai.id
+
     coment = Comentario(
         post_id=post_id,
         user_id=current_user.id if current_user else None,
         autor_nome=current_user.nome if current_user else "Investidor Anônimo",
         autor_initials=current_user.initials if current_user else "IA",
-        conteudo=req.conteudo
+        conteudo=req.conteudo,
+        parent_id=parent_id,
+        likes=0,
     )
     post.comentarios_count += 1
     db.add(coment)
+    if current_user:
+        _notificar(db, post.user_id, current_user.id, "comentario", post.id)
     db.commit()
 
     return {"status": "sucesso", "comments_count": post.comentarios_count}
+
+
+@app.post("/api/posts/{post_id}/comments/{comment_id}/like")
+def toggle_like_comentario(
+    post_id: int,
+    comment_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Curte ou remove a curtida de um comentário."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+
+    coment = db.query(Comentario).filter(
+        Comentario.id == comment_id,
+        Comentario.post_id == post_id,
+    ).first()
+    if not coment:
+        raise HTTPException(status_code=404, detail="Comentário não encontrado.")
+
+    existente = db.query(ComentarioLike).filter(
+        ComentarioLike.comment_id == comment_id,
+        ComentarioLike.user_id == current_user.id,
+    ).first()
+
+    if existente:
+        db.delete(existente)
+        coment.likes = max((coment.likes or 1) - 1, 0)
+        liked = False
+    else:
+        db.add(ComentarioLike(comment_id=comment_id, user_id=current_user.id))
+        coment.likes = (coment.likes or 0) + 1
+        liked = True
+
+    db.commit()
+    return {"status": "sucesso", "likes": coment.likes or 0, "liked": liked}
+
+
+@app.put("/api/posts/{post_id}/comments/{comment_id}")
+def editar_comentario(
+    post_id: int,
+    comment_id: int,
+    req: ComentarioUpdateRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+    coment = db.query(Comentario).filter(
+        Comentario.id == comment_id,
+        Comentario.post_id == post_id,
+    ).first()
+    if not coment:
+        raise HTTPException(status_code=404, detail="Comentário não encontrado.")
+    if coment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Você só pode editar os seus comentários.")
+    coment.conteudo = req.conteudo.strip()
+    db.commit()
+    return {"status": "sucesso", "conteudo": coment.conteudo}
+
+
+@app.delete("/api/posts/{post_id}/comments/{comment_id}")
+def excluir_comentario(
+    post_id: int,
+    comment_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+    coment = db.query(Comentario).filter(
+        Comentario.id == comment_id,
+        Comentario.post_id == post_id,
+    ).first()
+    if not coment:
+        raise HTTPException(status_code=404, detail="Comentário não encontrado.")
+    if coment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Você só pode excluir os seus comentários.")
+    respostas = db.query(Comentario).filter(Comentario.parent_id == coment.id).all()
+    ids = [coment.id] + [r.id for r in respostas]
+    db.query(ComentarioLike).filter(ComentarioLike.comment_id.in_(ids)).delete(synchronize_session=False)
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post:
+        post.comentarios_count = max((post.comentarios_count or 1) - len(ids), 0)
+    db.query(Comentario).filter(Comentario.parent_id == coment.id).delete()
+    db.delete(coment)
+    db.commit()
+    return {"status": "sucesso"}
+
+
+@app.get("/api/users/{user_id}")
+def perfil_publico(
+    user_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    seguidores = db.query(Seguir).filter(Seguir.following_id == user.id).count()
+    seguindo = db.query(Seguir).filter(Seguir.follower_id == user.id).count()
+    is_me = bool(current_user and current_user.id == user.id)
+    is_following = False
+    if current_user and not is_me:
+        is_following = db.query(Seguir).filter(
+            Seguir.follower_id == current_user.id,
+            Seguir.following_id == user.id,
+        ).first() is not None
+    presenca = getattr(user, "presenca", None) or "disponivel"
+    dados = {
+        "id": user.id,
+        "name": user.nome,
+        "handle": user.handle,
+        "initials": user.initials,
+            "avatar_url": user.avatar_url,
+            "capa_url": getattr(user, "capa_url", None),
+            "bio": user.bio,
+        "perfil_investidor": user.perfil_investidor,
+        "level": user.nivel,
+        "levelName": user.nivel_nome,
+        "points": user.pontos,
+        "badge": user.badge,
+        "presenca": presenca if is_me or presenca != "invisivel" else None,
+        "seguidores": seguidores,
+        "seguindo": seguindo,
+        "is_following": is_following,
+        "is_me": is_me,
+    }
+    return {"status": "sucesso", "dados": dados}
+
+
+@app.post("/api/users/{user_id}/follow")
+def alternar_seguir(
+    user_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="Você não pode seguir a si mesmo.")
+    alvo = db.query(User).filter(User.id == user_id).first()
+    if not alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    rel = db.query(Seguir).filter(
+        Seguir.follower_id == current_user.id,
+        Seguir.following_id == user_id,
+    ).first()
+    if rel:
+        db.delete(rel)
+        following = False
+    else:
+        db.add(Seguir(follower_id=current_user.id, following_id=user_id))
+        following = True
+        _notificar(db, user_id, current_user.id, "seguir")
+    db.commit()
+    seguidores = db.query(Seguir).filter(Seguir.following_id == user_id).count()
+    return {"status": "sucesso", "following": following, "seguidores": seguidores}
+
+
+@app.get("/api/notifications")
+def listar_notificacoes(
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+    itens = (
+        db.query(Notificacao)
+        .filter(Notificacao.user_id == current_user.id)
+        .order_by(Notificacao.data_criacao.desc())
+        .limit(40)
+        .all()
+    )
+    actor_ids = {n.actor_id for n in itens}
+    atores = {}
+    if actor_ids:
+        for u in db.query(User).filter(User.id.in_(actor_ids)).all():
+            atores[u.id] = u
+    textos = {
+        "seguir": "começou a seguir você",
+        "comentario": "comentou na sua publicação",
+        "reacao": "reagiu à sua publicação",
+        "compartilhamento": "compartilhou sua publicação",
+    }
+    nao_lidas = db.query(Notificacao).filter(
+        Notificacao.user_id == current_user.id,
+        Notificacao.lida == False,
+    ).count()
+    return {
+        "unread": nao_lidas,
+        "itens": [
+            {
+                "id": n.id,
+                "tipo": n.tipo,
+                "texto": textos.get(n.tipo, "interagiu com você"),
+                "post_id": n.post_id,
+                "lida": bool(n.lida),
+                "time": _format_comment_time(n.data_criacao),
+                "actor_id": n.actor_id,
+                "actor_nome": atores[n.actor_id].nome if n.actor_id in atores else "Investidor",
+                "actor_handle": atores[n.actor_id].handle if n.actor_id in atores else "",
+                "actor_initials": atores[n.actor_id].initials if n.actor_id in atores else "U",
+                "actor_avatar": atores[n.actor_id].avatar_url if n.actor_id in atores else None,
+            }
+            for n in itens
+        ],
+    }
+
+
+@app.post("/api/notifications/read")
+def marcar_notificacoes_lidas(
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+    db.query(Notificacao).filter(
+        Notificacao.user_id == current_user.id,
+        Notificacao.lida == False,
+    ).update({Notificacao.lida: True})
+    db.commit()
+    return {"status": "sucesso"}
 
 @app.get("/api/groups")
 def listar_grupos(db: Session = Depends(get_db)):
@@ -1144,10 +1600,19 @@ def chat_financeiro(
 
     historico_dict = [{"role": m.role, "content": m.content} for m in req.history] if req.history else []
 
+    contexto_investidor = None
+    if current_user:
+        contexto_investidor = {
+            "idade": current_user.idade,
+            "renda_mensal": current_user.renda_mensal,
+            "perfil_investidor": current_user.perfil_investidor,
+        }
+
     res = openrouter_service.responder_chat_financeiro(
         mensagem_usuario=req.message,
         historico_mensagens=historico_dict,
-        contexto_mercado=contexto
+        contexto_mercado=contexto,
+        contexto_investidor=contexto_investidor,
     )
 
     # Persistir mensagem no histórico
@@ -1231,15 +1696,28 @@ def status_health():
     }
 
 @app.delete("/api/posts/{post_id}")
-def delete_post(post_id: int, db: Session = Depends(get_db)):
-    # Busca o post no banco de dados
+def delete_post(
+    post_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Exclui uma publicação somente se ela pertencer ao usuário logado."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuário não autenticado.")
+
     post = db.query(Post).filter(Post.id == post_id).first()
-    
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado")
-        
-    # Deleta o post
+
+    mesmo_autor = post.user_id == current_user.id
+    mesmo_handle = (
+        post.user_id is None
+        and (post.autor_handle or "").lower() == (current_user.handle or "").lower()
+    )
+    if not mesmo_autor and not mesmo_handle:
+        raise HTTPException(status_code=403, detail="Você só pode excluir as suas publicações.")
+
     db.delete(post)
     db.commit()
-    
+
     return {"status": "success", "message": "Post excluído com sucesso"}

@@ -7,8 +7,6 @@ import {
   LineChart,
   Newspaper,
   PieChart,
-  Bell,
-  User as UserIcon,
   LogOut,
   Wallet,
   Sparkles,
@@ -20,27 +18,26 @@ import {
   RefreshCw,
   Activity,
   Play,
-  Pause
+  Pause,
+  LayoutDashboard,
+  FileText,
+  Settings,
 } from "lucide-react";
 import { type ReactNode, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { currentUser as defaultUser } from "@/lib/mock-data";
-import { UploadProofDialog } from "@/components/upload-proof-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { api, type UserProfile, type MarketTickerItem, removeStoredToken } from "@/lib/api";
 import { toast } from "sonner";
-import logoImg from "@/assets/logo_smartInvest.png";
+import {
+  writeCachedProfile,
+  cacheAvatarAlone,
+  mergeAvatarFromCache,
+  PROFILE_UPDATED_EVENT,
+} from "@/lib/profile-cache";
+import { recompressDataUrl, AVATAR_SOFT_LIMIT } from "@/lib/avatar-compress";
+import { isPresenceId, presenceDot, PRESENCE_EVENT, type PresenceId, readPresence, writePresence } from "@/lib/presence";
+import { NotificationsMenu } from "@/components/notifications-menu";
 
 const defaultMarketTickerItems: MarketTickerItem[] = [
   { symbol: "IBOVESPA", value: "131.450 pts", change: "+0.68%", up: true },
@@ -56,17 +53,21 @@ const defaultMarketTickerItems: MarketTickerItem[] = [
 ];
 
 const social = [
-  { to: "/", label: "Feed & Teses", icon: Home },
-  { to: "/chat", label: "Assistente IA", icon: MessageCircle },
+  { to: "/inicio", label: "Início", icon: Sparkles },
+  { to: "/", label: "Feed", icon: Home },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/teses", label: "Teses", icon: FileText },
+  { to: "/chat", label: "Chat com IA", icon: MessageCircle },
   { to: "/ranking", label: "Ranking & Ligas", icon: Trophy },
   { to: "/grupos", label: "Grupos Privados", icon: Users },
 ];
 
 const market = [
+  { to: "/carteira", label: "Minha Carteira", icon: Wallet },
   { to: "/mercado", label: "Mercado B3", icon: LineChart },
   { to: "/smart-invest", label: "Smart Invest (IA)", icon: PieChart },
-  { to: "/carteira", label: "Minha Carteira", icon: Wallet },
-  { to: "/noticias", label: "Sentimento News", icon: Newspaper },
+  { to: "/noticias", label: "News", icon: Newspaper },
+  { to: "/config", label: "Configurações", icon: Settings },
 ];
 
 function NavLink({
@@ -84,7 +85,7 @@ function NavLink({
     <Link
       to={to}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all",
+        "group relative flex items-center gap-3 rounded-sm px-3.5 py-2.5 text-sm font-medium transition-all",
         active
           ? "bg-primary/15 text-primary font-semibold shadow-sm shadow-primary/10 border-l-2 border-primary"
           : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
@@ -103,51 +104,68 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const isActive = (to: string) => (to === "/" ? path === "/" : path.startsWith(to));
-  const mobileNav = [social[0]!, social[1]!, market[0]!, market[1]!, social[2]!];
+  const mobileNav = [social[0]!, social[1]!, social[2]!, social[3]!, social[4]!];
 
   const [user, setUser] = useState<UserProfile>(defaultUser as any);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [editNome, setEditNome] = useState(defaultUser.name);
-  const [editRenda, setEditRenda] = useState("6500");
-  const [editIdade, setEditIdade] = useState("32");
-  const [savingProfile, setSavingProfile] = useState(false);
+  const [presence, setPresence] = useState<PresenceId>("disponivel");
 
-  const carregarPerfil = () => {
-    api.getProfile()
-      .then((res) => {
-        if (res?.dados) {
-          setUser(res.dados);
-          setEditNome(res.dados.name);
-          setEditRenda(String(res.dados.renda_mensal || 6500));
-          setEditIdade(String(res.dados.idade || 32));
+  useEffect(() => {
+    setPresence(readPresence());
+    const onPresence = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      if (isPresenceId(id)) setPresence(id);
+    };
+    window.addEventListener(PRESENCE_EVENT, onPresence);
+    return () => window.removeEventListener(PRESENCE_EVENT, onPresence);
+  }, []);
+
+  const aplicarPerfilNaUI = (dados: UserProfile) => {
+    const merged = mergeAvatarFromCache(dados);
+    setUser(merged);
+    writeCachedProfile(merged);
+    if (merged.avatar_url) cacheAvatarAlone(merged.avatar_url);
+    if (isPresenceId(merged.presenca)) {
+      setPresence(merged.presenca);
+      writePresence(merged.presenca);
+    }
+  };
+
+  const carregarPerfil = async () => {
+    try {
+      const res = await api.getProfile();
+      if (!res?.dados) return;
+      let dados = res.dados;
+      // Avatares antigos muito grandes quebram o cache e às vezes o chat
+      if (dados.avatar_url && dados.avatar_url.length > AVATAR_SOFT_LIMIT) {
+        const smaller = await recompressDataUrl(dados.avatar_url);
+        if (smaller && smaller.length < dados.avatar_url.length) {
+          dados = { ...dados, avatar_url: smaller };
+          aplicarPerfilNaUI(dados);
+          try {
+            await api.updateProfile({ avatar_url: smaller });
+          } catch {
+            /* mantém local mesmo se o PUT falhar */
+          }
+          return;
         }
-      })
-      .catch(() => {});
+      }
+      aplicarPerfilNaUI(dados);
+    } catch {
+      /* ignore */
+    }
   };
 
   useEffect(() => {
-    carregarPerfil();
+    void carregarPerfil();
+    const onProfile = (event: Event) => {
+      const detail = (event as CustomEvent<UserProfile>).detail;
+      if (!detail?.name) return;
+      setUser(mergeAvatarFromCache(detail));
+      if (isPresenceId(detail.presenca)) setPresence(detail.presenca);
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfile);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onProfile);
   }, []);
-
-  const handleSalvarPerfil = async () => {
-    setSavingProfile(true);
-    try {
-      const res = await api.updateProfile({
-        name: editNome,
-        renda_mensal: parseFloat(editRenda) || 5000,
-        idade: parseInt(editIdade) || 30,
-      });
-      if (res?.dados) {
-        setUser(res.dados);
-      }
-      toast.success("Perfil atualizado no banco de dados!");
-      setProfileOpen(false);
-    } catch (err: any) {
-      toast.error("Erro ao atualizar perfil");
-    } finally {
-      setSavingProfile(false);
-    }
-  };
 
   // Estado do Ticker Carrossel Dinâmico (B3 & Global Markets)
   const [tickerItems, setTickerItems] = useState<MarketTickerItem[]>(defaultMarketTickerItems);
@@ -180,7 +198,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const handleLogout = () => {
     removeStoredToken();
     toast.info("Você saiu da conta.");
-    setProfileOpen(false);
     navigate({ to: "/login" });
   };
 
@@ -285,22 +302,41 @@ export function AppShell({ children }: { children: ReactNode }) {
         <aside className="sticky top-0 hidden h-[calc(100vh-33px)] w-68 shrink-0 flex-col gap-5 border-r border-border bg-[#0B0E14]/95 px-4 py-5 backdrop-blur-xl lg:flex">
           {/* Logo Liquid Brand */}
           <Link to="/" className="flex items-center gap-3 px-2 py-1 transition-all hover:opacity-95 group">
-            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#161C2B] border border-primary/25 p-1 shadow-lg shadow-primary/20 group-hover:border-primary/50 transition-colors">
-              <img src="/logo.png" alt="Liquid Invest Logo" className="h-9 w-9 object-contain drop-shadow" />
-              <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-[#0B0E14] bg-emerald-500" />
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-black border border-primary/25 p-0.5 shadow-lg shadow-primary/20 group-hover:border-primary/50 transition-colors">
+              <img src="/logo.png" alt="Smart Invest" className="h-9 w-9 object-contain" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold tracking-tight text-lg text-foreground">
-                  LIQUID
-                </span>
-                <span className="text-primary font-extrabold text-lg">INVEST</span>
-              </div>
-              <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-                Quant & Fintech Hub
-              </p>
-            </div>
+            <img src="/logo2.png" alt="Smart Invest" className="h-8 min-w-0 flex-1 object-contain object-left" />
           </Link>
+
+          {/* User Profile Mini Card — logo abaixo */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (user.id) void navigate({ to: "/u/$userId", params: { userId: String(user.id) } });
+                }}
+                className="surface-card group flex w-full items-center gap-3 p-2.5 text-left transition-all hover:border-primary/50 hover:bg-surface-2"
+              >
+                <div className="relative">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-tr from-surface-2 to-surface border border-white/10 text-xs font-bold text-foreground group-hover:border-primary/40">
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      user.initials || "RD"
+                    )}
+                  </span>
+                  <span className={cn("absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0B0E14]", presenceDot(presence))} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {user.name || "Rafael Duarte"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user.handle || "@investidor"} · Nível {user.level || 6} ·{" "}
+                    <span className="text-primary font-semibold">{user.points || 34} pts</span>
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+              </button>
 
           {/* Quick Institutional Pill */}
           <div className="rounded-xl border border-white/5 bg-surface/80 p-2.5">
@@ -335,115 +371,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          {/* Bottom Controls / Profile */}
+          {/* Bottom Controls */}
           <div className="mt-auto space-y-3 pt-2">
-            <UploadProofDialog onSuccess={carregarPerfil} />
-
-            {/* User Profile Mini Card */}
-            <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-              <DialogTrigger asChild>
-                <button className="surface-card group flex w-full items-center gap-3 p-2.5 text-left transition-all hover:border-primary/50 hover:bg-surface-2">
-                  <div className="relative">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-surface-2 to-surface border border-white/10 text-xs font-bold text-foreground group-hover:border-primary/40">
-                      {user.initials || "RD"}
-                    </span>
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {user.name || "Rafael Duarte"}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      Nível {user.level || 6} · <span className="text-primary font-semibold">{user.points || 34} pts</span>
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md border-border bg-surface text-foreground shadow-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <UserIcon className="h-5 w-5 text-primary" />
-                    Perfil do Investidor
-                  </DialogTitle>
-                  <DialogDescription className="text-muted-foreground">
-                    Dados do investidor sincronizados com o motor de risco e o banco SQLite.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-2/60 p-3">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/15 text-base font-bold text-primary border border-primary/20">
-                      {user.initials || "RD"}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email || "rafael@aporta.com"}</p>
-                      <p className="text-xs text-primary font-semibold mt-0.5">
-                        Perfil: {user.perfil_investidor?.toUpperCase() || "MODERADO"} · Nível {user.level || 6} ({user.badge || "Ouro"})
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="nome_edit">Nome Completo</Label>
-                    <Input
-                      id="nome_edit"
-                      value={editNome}
-                      onChange={(e) => setEditNome(e.target.value)}
-                      className="bg-surface-2/50 border-border"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="idade_edit">Idade</Label>
-                      <Input
-                        id="idade_edit"
-                        value={editIdade}
-                        onChange={(e) => setEditIdade(e.target.value)}
-                        type="number"
-                        className="bg-surface-2/50 border-border"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="renda_edit">Renda Mensal (R$)</Label>
-                      <Input
-                        id="renda_edit"
-                        value={editRenda}
-                        onChange={(e) => setEditRenda(e.target.value)}
-                        type="number"
-                        className="bg-surface-2/50 border-border"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="destructive"
-                      className="gap-1.5 font-medium"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sair
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={() => setProfileOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      className="flex-1 font-semibold bg-primary hover:bg-[#E04B30] text-white shadow-lg shadow-primary/25"
-                      onClick={handleSalvarPerfil}
-                      disabled={savingProfile}
-                    >
-                      {savingProfile ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-border text-muted-foreground hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
           </div>
         </aside>
 
@@ -453,9 +390,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               {/* Mobile logo */}
-              <Link to="/" className="flex items-center gap-2.5 lg:hidden">
-                <img src="/logo.png" alt="Liquid Invest Logo" className="h-8 w-8 object-contain drop-shadow" />
-                <span className="font-extrabold tracking-tight text-base text-foreground">Liquid Invest</span>
+              <Link to="/" className="flex items-center gap-2 lg:hidden">
+                <img src="/logo.png" alt="Smart Invest" className="h-8 w-8 object-contain" />
+                <img src="/logo2.png" alt="Smart Invest" className="h-7 w-auto object-contain" />
               </Link>
 
               {/* Desktop breadcrumb/status */}
@@ -483,20 +420,22 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Button>
               </Link>
 
-              <button
-                onClick={() => toast.info("Você não possui notificações pendentes no momento.")}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-2 hover:border-primary/40"
-                title="Notificações"
-              >
-                <Bell className="h-4 w-4" />
-              </button>
+              <NotificationsMenu />
 
               <button
-                onClick={() => setProfileOpen(true)}
-                className="grid h-9 w-9 place-items-center rounded-xl bg-surface border border-white/10 text-xs font-bold transition-all hover:scale-105 hover:border-primary/50"
+                type="button"
+                onClick={() => {
+                  if (user.id) void navigate({ to: "/u/$userId", params: { userId: String(user.id) } });
+                }}
+                className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-xl bg-surface border border-white/10 text-xs font-bold transition-all hover:scale-105 hover:border-primary/50"
                 title="Meu Perfil"
               >
-                {user.initials || "RD"}
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  user.initials || "RD"
+                )}
+                <span className={cn("absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background", presenceDot(presence))} />
               </button>
 
               <Button

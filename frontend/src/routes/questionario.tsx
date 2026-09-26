@@ -72,7 +72,7 @@ function QuestionarioPage() {
       <div className="w-full max-w-2xl space-y-8 relative z-10">
         <div className="text-center">
           <div className="mx-auto mb-3 flex justify-center">
-            <img src="/logo.png" alt="Liquid Invest Logo" className="h-20 w-20 object-contain drop-shadow-[0_0_20px_rgba(252,91,63,0.3)]" />
+            <img src="/logo1.png" alt="Smart Invest" className="h-28 w-28 object-contain drop-shadow-[0_0_20px_rgba(220,38,38,0.3)]" />
           </div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary mb-3">
             <BrainCircuit className="h-3.5 w-3.5" />

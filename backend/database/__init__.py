@@ -1,5 +1,5 @@
 from .connection import engine, SessionLocal, Base, get_db, init_db
-from .models import User, Questionario, CarteiraItem, Post, PostLike, Comentario, Grupo, ChatLog, GrupoMensagem
+from .models import User, Questionario, CarteiraItem, Post, PostLike, Comentario, ComentarioLike, Seguir, Notificacao, Grupo, ChatLog, GrupoMensagem
 from .auth_utils import hash_password, verify_password, create_access_token, decode_access_token
 
 __all__ = [
@@ -14,6 +14,9 @@ __all__ = [
     "Post",
     "PostLike",
     "Comentario",
+    "ComentarioLike",
+    "Seguir",
+    "Notificacao",
     "Grupo",
     "ChatLog",
     "GrupoMensagem",

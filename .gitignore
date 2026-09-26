@@ -57,7 +57,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Python packaging dirs at repo root — do NOT ignore frontend/src/lib
+/lib/
 lib64/
 parts/
 sdist/
