@@ -110,7 +110,7 @@ export function UploadProofDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-input bg-surface-2/50 px-4 py-8 text-center transition-colors hover:border-primary/50">
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-input bg-surface-2/50 px-4 py-8 text-center transition-colors hover:border-primary/50">
             {fileName ? (
               <>
                 <CheckCircle2 className="h-7 w-7 text-success" />
@@ -140,7 +140,7 @@ export function UploadProofDialog({
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
               placeholder="Ex: Mais um mês comprando cotas de FIIs! Foco no longo prazo..."
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
+              className="flex min-h-[80px] w-full rounded-sm border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
             />
           </div>
 

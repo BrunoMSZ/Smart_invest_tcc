@@ -1,15 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Lock, Mail, User, DollarSign, Calendar, ArrowRight, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Sparkles, Lock, Mail, User, DollarSign, Calendar, ArrowRight, Loader2, CheckCircle2, ShieldCheck, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { api, setStoredToken } from "@/lib/api";
 import { toast } from "sonner";
-import logoImg from "@/assets/logo_smartInvest.png";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -32,6 +38,11 @@ function LoginPage() {
   // Estados de Login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
+  const [recoverOpen, setRecoverOpen] = useState(false);
+  const [recoverEmail, setRecoverEmail] = useState("");
+  const [recoverSenha, setRecoverSenha] = useState("");
+  const [recoverSenha2, setRecoverSenha2] = useState("");
+  const [recovering, setRecovering] = useState(false);
 
   // Estados de Cadastro
   const [regNome, setRegNome] = useState("");
@@ -133,11 +144,7 @@ function LoginPage() {
         {/* Header com Logo Liquid */}
         <div className="text-center">
           <div className="mx-auto mb-3 flex justify-center">
-            <img src="/logo.png" alt="Liquid Invest Logo" className="h-24 w-24 object-contain drop-shadow-[0_0_25px_rgba(252,91,63,0.35)] hover:scale-105 transition-transform duration-300" />
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-3xl font-black tracking-tight text-foreground">LIQUID</span>
-            <span className="text-3xl font-black text-primary">INVEST</span>
+            <img src="/logo1.png" alt="Smart Invest" className="h-56 w-56 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.35)]" />
           </div>
           <p className="mt-1.5 text-xs font-semibold tracking-wider uppercase text-muted-foreground">
             Fintech Quantitativa & Rede Social B3
@@ -182,7 +189,16 @@ function LoginPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="senha_login">Senha</Label>
-                    <span className="text-[11px] text-muted-foreground"></span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRecoverEmail(loginEmail);
+                        setRecoverOpen(true);
+                      }}
+                      className="text-[11px] font-semibold text-primary hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
                   </div>
                   <div className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -309,6 +325,92 @@ function LoginPage() {
             </TabsContent>
           </Tabs>
         </div>
+
+        <Dialog open={recoverOpen} onOpenChange={setRecoverOpen}>
+          <DialogContent className="max-w-md border-border bg-surface text-foreground">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                Recuperar senha
+              </DialogTitle>
+              <DialogDescription>
+                Informe o e-mail da conta e defina uma nova senha.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              className="space-y-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (recoverSenha !== recoverSenha2) {
+                  toast.error("As senhas não coincidem.");
+                  return;
+                }
+                if (recoverSenha.length < 6) {
+                  toast.error("A nova senha precisa ter pelo menos 6 caracteres.");
+                  return;
+                }
+                setRecovering(true);
+                try {
+                  const res = await api.recoverPassword(recoverEmail.trim(), recoverSenha);
+                  toast.success(res?.message || "Senha redefinida. Entre com a nova senha.");
+                  setLoginEmail(recoverEmail.trim());
+                  setLoginSenha("");
+                  setRecoverSenha("");
+                  setRecoverSenha2("");
+                  setRecoverOpen(false);
+                  setTab("login");
+                } catch (err: any) {
+                  toast.error(err?.message || "Não foi possível recuperar a senha.");
+                } finally {
+                  setRecovering(false);
+                }
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="recover_email">E-mail</Label>
+                <Input
+                  id="recover_email"
+                  type="email"
+                  required
+                  value={recoverEmail}
+                  onChange={(e) => setRecoverEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  className="bg-surface-2/50 border-border"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="recover_senha">Nova senha</Label>
+                <Input
+                  id="recover_senha"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={recoverSenha}
+                  onChange={(e) => setRecoverSenha(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="bg-surface-2/50 border-border"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="recover_senha2">Confirmar nova senha</Label>
+                <Input
+                  id="recover_senha2"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={recoverSenha2}
+                  onChange={(e) => setRecoverSenha2(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  className="bg-surface-2/50 border-border"
+                />
+              </div>
+              <Button type="submit" className="w-full font-semibold" disabled={recovering}>
+                {recovering ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                {recovering ? "Salvando..." : "Redefinir senha"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-emerald-400" />

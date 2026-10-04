@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from .connection import Base
 
@@ -16,7 +16,10 @@ class User(Base):
     renda_mensal = Column(Float, default=5000.0)
     idade = Column(Integer, default=30)
     patrimonio_estimado = Column(Float, default=50000.0)
-    avatar_url = Column(String(255), nullable=True)
+    avatar_url = Column(Text, nullable=True)
+    capa_url = Column(Text, nullable=True)
+    bio = Column(Text, nullable=True)
+    presenca = Column(String(20), default="disponivel")
     pontos = Column(Integer, default=34)
     nivel = Column(Integer, default=6)
     nivel_nome = Column(String(80), default="Investidor Consistente")
@@ -79,14 +82,16 @@ class Post(Base):
     conteudo = Column(Text, nullable=False)
     tag = Column(String(40), default="Aporte")  # Aporte, Análise, Liga, Dúvida
     comprovante = Column(Boolean, default=False)
-    comprovante_url = Column(String(Text), nullable=True)
+    comprovante_url = Column(Text, nullable=True)
     likes = Column(Integer, default=0)
     comentarios_count = Column(Integer, default=0)
+    shared_from_post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
     data_criacao = Column(DateTime, default=datetime.utcnow)
 
     usuario = relationship("User", back_populates="posts")
     comentarios = relationship("Comentario", back_populates="post", cascade="all, delete-orphan")
     likes_rel = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
+    shared_from = relationship("Post", remote_side=[id], foreign_keys=[shared_from_post_id])
 
 
 class PostLike(Base):
@@ -108,10 +113,44 @@ class Comentario(Base):
     autor_nome = Column(String(120), nullable=False)
     autor_initials = Column(String(10), default="US")
     conteudo = Column(Text, nullable=False)
+    parent_id = Column(Integer, ForeignKey("comentarios.id"), nullable=True)
+    likes = Column(Integer, default=0)
     data_criacao = Column(DateTime, default=datetime.utcnow)
 
     post = relationship("Post", back_populates="comentarios")
     usuario = relationship("User", back_populates="comentarios")
+    likes_rel = relationship("ComentarioLike", back_populates="comentario", cascade="all, delete-orphan")
+
+
+class ComentarioLike(Base):
+    __tablename__ = "comentario_likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comentarios.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    comentario = relationship("Comentario", back_populates="likes_rel")
+
+
+class Notificacao(Base):
+    __tablename__ = "notificacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    tipo = Column(String(30), nullable=False)  # seguir, comentario, reacao, compartilhamento
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=True)
+    lida = Column(Boolean, default=False)
+    data_criacao = Column(DateTime, default=datetime.utcnow)
+
+
+class Seguir(Base):
+    __tablename__ = "seguidores"
+    __table_args__ = (UniqueConstraint("follower_id", "following_id", name="uq_seguir"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    follower_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    following_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
 
 class Grupo(Base):

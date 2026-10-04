@@ -189,7 +189,8 @@ Por favor, elabore um parecer executivo para o ativo **{ticker.upper()}** cruzan
         self,
         mensagem_usuario: str,
         historico_mensagens: Optional[List[Dict[str, str]]] = None,
-        contexto_mercado: Optional[Dict[str, Any]] = None
+        contexto_mercado: Optional[Dict[str, Any]] = None,
+        contexto_investidor: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Responde a dúvidas do usuário no chat (tanto sobre ativos específicos quanto finanças gerais).
@@ -218,6 +219,18 @@ Por favor, elabore um parecer executivo para o ativo **{ticker.upper()}** cruzan
         )
 
         messages = [{"role": "system", "content": prompt_sistema}]
+
+        if contexto_investidor:
+            messages.append({
+                "role": "system",
+                "content": (
+                    "Dados privados deste investidor, visíveis só para você e para ele. "
+                    "Use para personalizar a resposta e não revele esses números como se fossem públicos.\n"
+                    f"- Idade: {contexto_investidor.get('idade')}\n"
+                    f"- Renda mensal: R$ {contexto_investidor.get('renda_mensal')}\n"
+                    f"- Perfil: {contexto_investidor.get('perfil_investidor')}"
+                ),
+            })
 
         if contexto_mercado:
             contexto_str = (
