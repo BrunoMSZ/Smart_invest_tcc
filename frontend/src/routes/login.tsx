@@ -319,7 +319,7 @@ function LoginPage() {
 
                 <Button type="submit" className="w-full font-bold gap-2 mt-4 bg-primary hover:bg-[#E04B30] text-white shadow-lg shadow-primary/25" disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  <span>{loading ? "Cadastrando..." : "Criar Conta na Liquid Invest"}</span>
+                  <span>{loading ? "Cadastrando..." : "Criar Conta na Smart Invest"}</span>
                 </Button>
               </form>
             </TabsContent>
@@ -414,7 +414,7 @@ function LoginPage() {
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-emerald-400" />
-          <span>{new Date().getFullYear()} Liquid Invest · Plataforma Quantitativa & Social B3.</span>
+          <span>{new Date().getFullYear()} Smart Invest · Plataforma Quantitativa & Social B3.</span>
         </div>
       </div>
     </div>
