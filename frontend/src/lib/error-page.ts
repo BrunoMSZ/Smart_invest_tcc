@@ -1,4 +1,3 @@
-/** Zero-dependency HTML fallback when the React tree cannot be rendered. */
 export function renderErrorPage(): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">

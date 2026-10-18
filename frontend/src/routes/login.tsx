@@ -35,7 +35,6 @@ function LoginPage() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
 
-  // Estados de Login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
   const [recoverOpen, setRecoverOpen] = useState(false);
@@ -44,7 +43,6 @@ function LoginPage() {
   const [recoverSenha2, setRecoverSenha2] = useState("");
   const [recovering, setRecovering] = useState(false);
 
-  // Estados de Cadastro
   const [regNome, setRegNome] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regSenha, setRegSenha] = useState("");
@@ -136,12 +134,12 @@ function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-background px-4 py-12 overflow-hidden selection:bg-primary/20 selection:text-primary">
-      {/* Background glow Liquid style */}
+      
       <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md space-y-6">
-        {/* Header com Logo Liquid */}
+        
         <div className="text-center">
           <div className="mx-auto mb-3 flex justify-center">
             <img src="/logo1.png" alt="Smart Invest" className="h-56 w-56 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.35)]" />
@@ -155,7 +153,7 @@ function LoginPage() {
           </div>
         </div>
 
-        {/* Card Principal Liquid Style */}
+        
         <div className="surface-card liquid-glow p-6 sm:p-8 border-border/80">
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6 bg-surface-2/60 border border-border p-1">
@@ -167,7 +165,7 @@ function LoginPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* ABA 1: LOGIN */}
+            
             <TabsContent value="login" className="space-y-4">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
@@ -221,7 +219,7 @@ function LoginPage() {
               </form>
             </TabsContent>
 
-            {/* ABA 2: CADASTRO */}
+            
             <TabsContent value="register" className="space-y-4">
               <form onSubmit={handleRegister} className="space-y-3.5">
                 <div className="space-y-1.5">

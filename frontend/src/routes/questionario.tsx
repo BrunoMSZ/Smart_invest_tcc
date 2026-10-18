@@ -20,7 +20,6 @@ function QuestionarioPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Estados para as 3 perguntas comportamentais (0 = não respondido)
   const [q1, setQ1] = useState<number>(0);
   const [q2, setQ2] = useState<number>(0);
   const [q3, setQ3] = useState<number>(0);
@@ -33,15 +32,11 @@ function QuestionarioPage() {
     
     setLoading(true);
 
-    // Soma as respostas (O total será entre 3 e 15 pontos)
     const pontuacaoTotal = q1 + q2 + q3;
     
-    // Converte a pontuação de (3 a 15) para a escala da sua API (1 a 10)
     const riscoCalculado = Math.max(1, Math.round((pontuacaoTotal / 15) * 10));
 
     try {
-      // Como a idade e renda já foram no cadastro, podemos passar valores padrão aqui 
-      // ou o seu backend deve ignorá-los e puxar do banco de dados.
       const res = await api.enviarQuestionario({
         idade: 30,           // Preenchimento obrigatório para a tipagem, mas o DB já tem o real
         renda_mensal: 5000,  // Preenchimento obrigatório para a tipagem, mas o DB já tem o real
@@ -65,7 +60,7 @@ function QuestionarioPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
-      {/* Background glow effects */}
+      
       <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
 
@@ -85,7 +80,7 @@ function QuestionarioPage() {
             Responda a estas 3 perguntas objetivas para calibrar os modelos de Markowitz e XGBoost de acordo com a sua tolerância a risco.
           </p>
           
-          {/* Progress bar */}
+          
           <div className="mt-4 flex items-center justify-center gap-3 max-w-xs mx-auto">
             <div className="h-1.5 flex-1 bg-surface-2 rounded-full overflow-hidden">
               <div 
@@ -98,7 +93,7 @@ function QuestionarioPage() {
         </div>
 
         <form onSubmit={handleEnviarQuestionario} className="space-y-6">
-          {/* PERGUNTA 1 */}
+          
           <div className="surface-card p-5 sm:p-6 space-y-4 border-border/80">
             <h3 className="flex items-center gap-2 text-sm sm:text-base font-bold text-foreground">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black">
@@ -113,7 +108,7 @@ function QuestionarioPage() {
             </div>
           </div>
 
-          {/* PERGUNTA 2 */}
+          
           <div className="surface-card p-5 sm:p-6 space-y-4 border-border/80">
             <h3 className="flex items-center gap-2 text-sm sm:text-base font-bold text-foreground">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black">
@@ -128,7 +123,7 @@ function QuestionarioPage() {
             </div>
           </div>
 
-          {/* PERGUNTA 3 */}
+          
           <div className="surface-card p-5 sm:p-6 space-y-4 border-border/80">
             <h3 className="flex items-center gap-2 text-sm sm:text-base font-bold text-foreground">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-primary text-xs font-black">
@@ -161,7 +156,6 @@ function QuestionarioPage() {
   );
 }
 
-// Componente auxiliar para deixar os botões de opção bonitos
 function OptionCard({ value, current, onClick, label, desc }: any) {
   const isSelected = current === value;
   return (

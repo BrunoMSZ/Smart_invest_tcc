@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 type SharePostDialogProps = {
   post: PostItem;
   onShared?: () => void;
-  /** Tag do post criado ao compartilhar (Feed vs Teses) */
   defaultTag?: string;
   className?: string;
   iconOnly?: boolean;
@@ -132,7 +131,6 @@ export function SharePostDialog({
   );
 }
 
-/** Card embutido do post original quando alguém compartilha */
 export function SharedPostEmbed({ post }: { post: PostItem }) {
   return (
     <div className="mt-3 rounded-sm border border-border bg-surface-2/40 p-3">

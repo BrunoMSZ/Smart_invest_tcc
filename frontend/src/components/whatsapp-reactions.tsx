@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { SmilePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Reações amplas no estilo WhatsApp */
 export const WHATSAPP_REACTIONS = [
   "👍", "❤️", "😂", "😮", "😢", "🙏",
   "🔥", "👏", "🎉", "😍", "🤔", "👎",
@@ -14,7 +13,6 @@ export type ReactionCounts = Partial<Record<WhatsAppEmoji, number>>;
 
 type WhatsAppReactionsProps = {
   storageKey: string;
-  /** Contagem inicial opcional (ex.: likes do post viram ❤️) */
   seed?: ReactionCounts;
   align?: "left" | "right";
   className?: string;

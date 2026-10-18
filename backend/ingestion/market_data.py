@@ -18,7 +18,6 @@ def baixar_ativos(tickers, periodo="10y"):
                 auto_adjust=False
             )
 
-            # verifica vazio
             if df.empty:
                 print(f"Sem dados para {ticker}")
                 continue
@@ -27,7 +26,6 @@ def baixar_ativos(tickers, periodo="10y"):
 
             print(df.columns)
 
-            # renomeia dinamicamente
             rename_map = {
                 "Date": "data",
                 "Open": "abertura",
@@ -40,7 +38,6 @@ def baixar_ativos(tickers, periodo="10y"):
 
             df.rename(columns=rename_map, inplace=True)
 
-            # cria adj_close se não existir
             if "adj_close" not in df.columns:
                 df["adj_close"] = df["preco_fechamento"]
 
@@ -54,7 +51,6 @@ def baixar_ativos(tickers, periodo="10y"):
 
             print(f"Erro em {ticker}: {e}")
 
-    # proteção
     if len(frames) == 0:
         raise Exception(
             "Nenhum ativo foi carregado."

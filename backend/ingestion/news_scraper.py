@@ -4,9 +4,6 @@ from newspaper import Article
 
 
 def raspar_artigo_web(url: str) -> Dict[str, Any]:
-    """
-    Faz o download e parsing de uma notícia a partir de uma URL web.
-    """
     try:
         artigo = Article(url, language="pt")
         artigo.download()

@@ -20,7 +20,6 @@ Base = declarative_base()
 
 
 def get_db():
-    """Dependency para obter sessão do banco de dados no FastAPI."""
     db = SessionLocal()
     try:
         yield db
@@ -29,15 +28,11 @@ def get_db():
 
 
 def init_db():
-    """Inicializa as tabelas do banco de dados e insere dados padrão caso vazio."""
-    # Garante que a pasta data/ existe
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Importa os models para registrá-los no Base
     from . import models
     Base.metadata.create_all(bind=engine)
 
-    # Migração leve SQLite: adiciona coluna bio se ainda não existir
     try:
         from sqlalchemy import text
         with engine.connect() as conn:

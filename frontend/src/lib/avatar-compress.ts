@@ -1,4 +1,3 @@
-/** Comprime data URL / File de avatar para caber no DB e no chat. */
 
 const MAX_SIDE = 192;
 const MAX_CHARS = 100_000;
@@ -54,7 +53,6 @@ export async function compressImageFile(file: File, options?: CompressOptions): 
   }
 }
 
-/** Recomprime data URL já existente (ex.: avatar antigo grande no servidor). */
 export async function recompressDataUrl(dataUrl: string): Promise<string> {
   if (!dataUrl.startsWith("data:image")) return dataUrl;
   if (dataUrl.length <= MAX_CHARS) return dataUrl;

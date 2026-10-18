@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Newspaper, Loader2, Sparkles } from "lucide-react";
+import { Newspaper, Loader2, Sparkles, ExternalLink, RefreshCw } from "lucide-react";
 import { news as mockNews, type Sentiment } from "@/lib/mock-data";
-import { getApiBase } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/noticias")({
@@ -33,42 +32,60 @@ const sentimentClass: Record<Sentiment, string> = {
   Negativo: "bg-rose-500/15 text-rose-400 border-rose-500/30",
 };
 
+interface NewsItem {
+  id: string;
+  title: string;
+  source: string;
+  time: string;
+  sentiment: Sentiment;
+  summary: string;
+  link: string;
+}
+
 function NewsPage() {
   const [filter, setFilter] = useState<(typeof filters)[number]>("Todas");
-  const [newsList, setNewsList] = useState<any[]>(mockNews);
+  const [newsList, setNewsList] = useState<NewsItem[]>(() =>
+    mockNews.map((n, i) => ({
+      id: String(n.id || i),
+      title: n.title,
+      source: n.source,
+      time: n.time,
+      sentiment: n.sentiment,
+      summary: n.summary,
+      link: (n as any).link || "#",
+    }))
+  );
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const carregarNoticias = () => {
     setLoading(true);
-    fetch(`${getApiBase()}/api/news`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro API");
-        return res.json();
-      })
+    api.getNews(undefined, 20)
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          const formatted = data.map((item: any, i: number) => ({
-            id: item.id || String(i),
-            title: item.titulo || item.title,
-            source: item.fonte || item.source || "Mercado B3",
-            time: item.data || item.time || "Hoje",
-            sentiment: (item.sentiment || "Neutro") as Sentiment,
+          const formatted: NewsItem[] = data.map((item, i) => ({
+            id: item.id || `news-${i}`,
+            title: item.titulo,
+            source: item.fonte || "Mercado B3",
+            time: item.data || "Hoje",
+            sentiment: item.sentiment || "Neutro",
             summary: item.summary || item.titulo,
+            link: item.link || "#",
           }));
           setNewsList(formatted);
         }
       })
-      .catch(() => {
-        // Mantém mockNews
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    carregarNoticias();
   }, []);
 
   const list = filter === "Todas" ? newsList : newsList.filter((n) => n.sentiment === filter);
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      {/* Header Liquid Style */}
       <div className="surface-card p-6 border-border/80">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -83,12 +100,26 @@ function NewsPage() {
               Manchetes financeiras monitoradas e classificadas com inteligência artificial para antecipar movimentos de mercado.
             </p>
           </div>
-          {loading && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2/60 px-3 py-1.5 rounded-xl border border-white/5">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span>Sincronizando feeds...</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={carregarNoticias}
+              disabled={loading}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground bg-surface-2/60 px-3 py-1.5 rounded-xl border border-white/5 transition-colors disabled:opacity-50"
+              title="Atualizar notícias"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span>Sincronizando feeds...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 text-primary" />
+                  <span>Atualizar</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -110,32 +141,47 @@ function NewsPage() {
       </div>
 
       <div className="space-y-3.5">
-        {list.map((n) => (
-          <article
-            key={n.id}
-            className="surface-card p-5 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg border-border/80"
-          >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <span className="font-semibold text-primary/90">{n.source}</span>
-                  <span>•</span>
-                  <span>{n.time}</span>
+        {list.map((n, idx) => {
+          const hasLink = n.link && n.link !== "#";
+          return (
+            <article
+              key={`${n.id}-${idx}`}
+              className="surface-card p-5 transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-lg border-border/80 group"
+            >
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                    <span className="font-semibold text-primary/90">{n.source}</span>
+                    <span>•</span>
+                    <span>{n.time}</span>
+                  </div>
+                  {hasLink ? (
+                    <a
+                      href={n.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-base font-bold leading-snug text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <span>{n.title}</span>
+                      <ExternalLink className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-opacity shrink-0 text-primary" />
+                    </a>
+                  ) : (
+                    <h2 className="text-base font-bold leading-snug text-foreground">{n.title}</h2>
+                  )}
                 </div>
-                <h2 className="text-base font-bold leading-snug text-foreground">{n.title}</h2>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border",
+                    sentimentClass[n.sentiment as Sentiment] || sentimentClass.Neutro,
+                  )}
+                >
+                  {n.sentiment}
+                </span>
               </div>
-              <span
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1 text-[11px] font-bold border",
-                  sentimentClass[n.sentiment as Sentiment] || sentimentClass.Neutro,
-                )}
-              >
-                {n.sentiment}
-              </span>
-            </div>
-            <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{n.summary}</p>
-          </article>
-        ))}
+              <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{n.summary}</p>
+            </article>
+          );
+        })}
       </div>
 
       {list.length === 0 && (

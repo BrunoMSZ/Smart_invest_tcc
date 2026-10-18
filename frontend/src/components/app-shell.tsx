@@ -135,7 +135,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       const res = await api.getProfile();
       if (!res?.dados) return;
       let dados = res.dados;
-      // Avatares antigos muito grandes quebram o cache e às vezes o chat
       if (dados.avatar_url && dados.avatar_url.length > AVATAR_SOFT_LIMIT) {
         const smaller = await recompressDataUrl(dados.avatar_url);
         if (smaller && smaller.length < dados.avatar_url.length) {
@@ -143,16 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           aplicarPerfilNaUI(dados);
           try {
             await api.updateProfile({ avatar_url: smaller });
-          } catch {
-            /* mantém local mesmo se o PUT falhar */
-          }
+          } catch {}
           return;
         }
       }
       aplicarPerfilNaUI(dados);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -167,7 +162,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onProfile);
   }, []);
 
-  // Estado do Ticker Carrossel Dinâmico (B3 & Global Markets)
   const [tickerItems, setTickerItems] = useState<MarketTickerItem[]>(defaultMarketTickerItems);
   const [isTickerPaused, setIsTickerPaused] = useState(false);
   const [isRefreshingTicker, setIsRefreshingTicker] = useState(false);
@@ -203,10 +197,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground flex flex-col selection:bg-primary/20 selection:text-primary">
-      {/* 1. TOP LIVE MARKET TICKER CAROUSEL (B3 & Global Markets ao vivo) */}
+      
       <div className="border-b border-border/80 bg-[#07090E] text-xs py-1 px-3 z-40 select-none overflow-hidden">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Badge Fixo Esquerdo */}
+          
           <div className="flex items-center gap-2 shrink-0 border-r border-border/60 pr-3">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -234,7 +228,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
 
-          {/* Área Deslizante do Carrossel Contínuo Devagar */}
+          
           <div
             onMouseEnter={() => setIsTickerPaused(true)}
             onMouseLeave={() => setIsTickerPaused(false)}
@@ -289,7 +283,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Referência Institucional */}
+          
           <div className="hidden 2xl:flex items-center gap-2 shrink-0 border-l border-border/60 pl-3 text-muted-foreground text-[11px]">
             <Building2 className="h-3.5 w-3.5 text-primary" />
             <span className="truncate">Cotações B3 & Globais em Tempo Real</span>
@@ -298,9 +292,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <div className="mx-auto flex w-full max-w-[1440px] flex-1">
-        {/* 2. SIDEBAR - LIQUID INVESTMENT STYLE */}
+        
         <aside className="sticky top-0 hidden h-[calc(100vh-33px)] w-68 shrink-0 flex-col gap-5 border-r border-border bg-[#0B0E14]/95 px-4 py-5 backdrop-blur-xl lg:flex">
-          {/* Logo Liquid Brand */}
+          
           <Link to="/" className="flex items-center gap-3 px-2 py-1 transition-all hover:opacity-95 group">
             <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-black border border-primary/25 p-0.5 shadow-lg shadow-primary/20 group-hover:border-primary/50 transition-colors">
               <img src="/logo.png" alt="Smart Invest" className="h-9 w-9 object-contain" />
@@ -308,7 +302,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <img src="/logo2.png" alt="Smart Invest" className="h-8 min-w-0 flex-1 object-contain object-left" />
           </Link>
 
-          {/* User Profile Mini Card — logo abaixo */}
+          
               <button
                 type="button"
                 onClick={() => {
@@ -338,7 +332,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
               </button>
 
-          {/* Quick Institutional Pill */}
+          
           <div className="rounded-xl border border-white/5 bg-surface/80 p-2.5">
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
@@ -354,7 +348,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </p>
           </div>
 
-          {/* Navigation Links */}
+          
           <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
             <p className="px-3 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
               Comunidade & Ligas
@@ -371,7 +365,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          {/* Bottom Controls */}
+          
           <div className="mt-auto space-y-3 pt-2">
             <Button
               variant="outline"
@@ -384,18 +378,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* 3. MAIN CONTENT AREA */}
+        
         <div className="min-w-0 flex-1 pb-24 lg:pb-0">
-          {/* Header Bar */}
+          
           <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
-              {/* Mobile logo */}
+              
               <Link to="/" className="flex items-center gap-2 lg:hidden">
                 <img src="/logo.png" alt="Smart Invest" className="h-8 w-8 object-contain" />
                 <img src="/logo2.png" alt="Smart Invest" className="h-7 w-auto object-contain" />
               </Link>
 
-              {/* Desktop breadcrumb/status */}
+              
               <div className="hidden lg:flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-2 border border-border text-muted-foreground">
                   <Activity className="h-3 w-3 text-emerald-400" />
@@ -454,7 +448,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {/* 4. MOBILE BOTTOM BAR */}
+      
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         {mobileNav.map(({ to, label, icon: Icon }) => (
           <Link

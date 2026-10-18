@@ -11,10 +11,6 @@ except ImportError:
 
 
 def gerar_ranking_inteligente(top_n: int = 10) -> List[Dict[str, Any]]:
-    """
-    Gera ranking multi-fatorial consolidado:
-    Score Composto = 60% Probabilidade XGBoost + 30% Alinhamento de Tendência + 10% Sentimento FinBERT
-    """
     ativos_base = [
         {"ticker": "PETR4", "nome": "Petrobras PN", "setor": "Petróleo e Gás"},
         {"ticker": "VALE3", "nome": "Vale ON", "setor": "Mineração"},
@@ -40,7 +36,7 @@ def gerar_ranking_inteligente(top_n: int = 10) -> List[Dict[str, Any]]:
 
         prob_ml = dados_mkt.get("prob_ml", 0.5)
         trend_score = 100.0 if dados_mkt.get("ma_21_dist", 0) > 0 and dados_mkt.get("ma_50_dist", 0) > 0 else 50.0
-        sent_score = (sentimento + 1.0) * 50.0  # Converte de [-1, 1] para [0, 100]
+        sent_score = (sentimento + 1.0) * 50.0
 
         score_final = (0.60 * prob_ml * 100) + (0.30 * trend_score) + (0.10 * sent_score)
 
@@ -56,13 +52,11 @@ def gerar_ranking_inteligente(top_n: int = 10) -> List[Dict[str, Any]]:
             "sentimento_score": round(sentimento, 2)
         })
 
-    # Ordenar por maior score composto
     ranking_itens.sort(key=lambda x: x["score_final"], reverse=True)
     return ranking_itens[:top_n]
 
 
 def gerar_ranking(df: pd.DataFrame) -> pd.DataFrame:
-    """Função compatível com a assinatura histórica do TCC."""
     if df.empty or "data" not in df.columns:
         itens = gerar_ranking_inteligente(10)
         return pd.DataFrame(itens)

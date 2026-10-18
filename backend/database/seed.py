@@ -6,16 +6,13 @@ from .auth_utils import hash_password
 
 
 def seed_database():
-    """Popula o banco de dados com dados iniciais realistas se a tabela de usuários estiver vazia."""
     db = SessionLocal()
     try:
-        # Se já existirem usuários cadastrados, não sobrescreve
         if db.query(User).first() is not None:
             return
 
         print("[Seed] Populando banco de dados inicial...")
 
-        # 1. Usuários
         user_rafael = User(
             nome="Rafael Duarte",
             email="rafael@aporta.com",
@@ -95,13 +92,11 @@ def seed_database():
         db.add_all([user_rafael, user_marina, user_caio, user_bruno])
         db.commit()
 
-        # Recarregar IDs
         db.refresh(user_rafael)
         db.refresh(user_marina)
         db.refresh(user_caio)
         db.refresh(user_bruno)
 
-        # 2. Posts Iniciais da Comunidade
         p1 = Post(
             user_id=user_marina.id,
             autor_nome=user_marina.nome,
@@ -146,7 +141,6 @@ def seed_database():
 
         db.add_all([p1, p2, p3])
 
-        # 3. Grupos / Ligas
         g1 = Grupo(
             nome="Liga Renda Passiva",
             descricao="Foco em dividendos mensais, FIIs de tijolo e ações pagadoras.",
@@ -185,7 +179,6 @@ def seed_database():
 
         db.add_all([g1, g2, g3])
 
-        # 4. Carteira Recomendada / Ativos do Rafael
         c1 = CarteiraItem(
             user_id=user_rafael.id,
             ticker="Tesouro Selic",
@@ -239,7 +232,6 @@ def seed_database():
 
         db.add_all([c1, c2, c3, c4, c5])
 
-        # 5. Questionário Inicial
         q1 = Questionario(
             user_id=user_rafael.id,
             idade=32,

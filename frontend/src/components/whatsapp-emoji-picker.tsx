@@ -8,7 +8,6 @@ export type EmojiCategory = {
   emojis: string[];
 };
 
-/** Categorias no estilo WhatsApp (variedade ampla) */
 export const WHATSAPP_EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     id: "smileys",

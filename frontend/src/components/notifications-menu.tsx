@@ -50,9 +50,7 @@ export function NotificationsMenu() {
         await api.markNotificationsRead();
         setUnread(0);
         setItens((lista) => lista.map((item) => ({ ...item, lida: true })));
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     }
   };
 

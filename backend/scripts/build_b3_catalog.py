@@ -18,7 +18,6 @@ def build_catalog():
     df = pd.read_parquet(parquet_path, columns=["ticker", "data", "preco_fechamento", "volume"])
     df["data"] = pd.to_datetime(df["data"])
 
-    # Filtra tickers válidos B3
     valid = df[df["ticker"].str.match(r"^[A-Z0-9]{4,5}(?:3|4|5|6|11|34)$", na=False)].copy()
     recent = valid[valid["data"] >= "2022-01-01"]
     stats = recent.groupby("ticker").agg({
@@ -125,7 +124,6 @@ def build_catalog():
     }
 
     catalog = []
-    # Seleciona os 500 ativos com maior liquidez e presença recente
     for _, row in stats.head(500).iterrows():
         t = str(row["ticker"])
         pref = t[:4]
@@ -170,7 +168,7 @@ def build_catalog():
             "classe": classe,
             "preco": round(last_p, 2),
             "price": round(last_p, 2),
-            "change": round(((hash(t) % 60) - 25) / 10.0, 2),  # variação realista de -2.5% a +3.5%
+            "change": round(((hash(t) % 60) - 25) / 10.0, 2),
             "volume": vol,
             "data_recente": str(row["data"])[:10]
         })

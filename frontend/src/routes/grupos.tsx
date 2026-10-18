@@ -60,31 +60,23 @@ function GroupsPage() {
   const [userRanking, setUserRanking] = useState<UserRankingItem[]>(defaultRanking as any);
   const [loading, setLoading] = useState(false);
 
-  // Modais de Criação e Ingresso
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openJoinModal, setOpenJoinModal] = useState(false);
 
-  // Formulário de Criação
   const [novoNome, setNovoNome] = useState("");
   const [novaDescricao, setNovoDescricao] = useState("");
   const [novaMeta, setNovaMeta] = useState("500,00");
   const [isPrivado, setIsPrivado] = useState(true);
   const [creating, setCreating] = useState(false);
 
-  // Formulário de Ingresso por Código
   const [codigoConviteInput, setCodigoConviteInput] = useState("");
   const [joining, setJoining] = useState(false);
 
-  // Aporte individual na liga
   const [recordingAporteId, setRecordingAporteId] = useState<string | null>(null);
 
-  // Cópia de links e seleção de grupo para convite
   const [copiedGeneral, setCopiedGeneral] = useState(false);
   const [selectedGroupIdx, setSelectedGroupIdx] = useState(0);
 
-  // ==========================================
-  // ESTADOS DO CHAT ESTILO WHATSAPP DA LIGA
-  // ==========================================
   const [selectedChatGroup, setSelectedChatGroup] = useState<GroupItem | null>(null);
   const [chatMessages, setChatMessages] = useState<GroupMessageItem[]>([]);
   const [loadingChatMessages, setLoadingChatMessages] = useState(false);
@@ -123,7 +115,6 @@ function GroupsPage() {
   useEffect(() => {
     carregarGrupos();
 
-    // Se o usuário acessou via link com ?convite=XYZ, abre o modal de ingresso automaticamente
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const conviteParam = params.get("convite");
@@ -147,7 +138,6 @@ function GroupsPage() {
     }
   }, [chatMessages, selectedChatGroup]);
 
-  // Grupo selecionado para o card de convite
   const activeGroup = groupList[selectedGroupIdx] || groupList[0];
   const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
   const generalInviteLink = activeGroup
@@ -236,7 +226,6 @@ function GroupsPage() {
     }
   };
 
-  // Abrir o WhatsApp Chat da Liga
   const abrirChatWhatsapp = async (grupo: GroupItem) => {
     setSelectedChatGroup(grupo);
     setLoadingChatMessages(true);
@@ -246,7 +235,6 @@ function GroupsPage() {
       scrollChatToBottom(false);
     } catch (err) {
       console.warn("[Grupos] Erro ao carregar mensagens:", err);
-      // Fallback para mensagens realistas da liga
       setChatMessages([
         { id: 1, from: "Marina Costa", initials: "MC", mine: false, text: `Fala investidores da ${grupo.name}! 🚀`, time: "09:30" },
         { id: 2, from: "Caio Menezes", initials: "CM", mine: false, text: "Bora manter o foco no aporte deste mês!", time: "09:34" },
@@ -272,7 +260,6 @@ function GroupsPage() {
       time: agora,
     };
 
-    // Atualização otimista na tela
     setChatMessages((prev) => [...prev, tempMsg]);
     setChatDraft("");
     scrollChatToBottom(true);
@@ -296,7 +283,7 @@ function GroupsPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      {/* Liquid Header */}
+      
       <div className="surface-card p-6 border-border/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -313,7 +300,7 @@ function GroupsPage() {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-            {/* Botão Entrar com Código de Convite */}
+            
             <Dialog open={openJoinModal} onOpenChange={setOpenJoinModal}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2 font-bold border-border bg-surface-2 hover:bg-surface-2/80 text-foreground">
@@ -356,7 +343,7 @@ function GroupsPage() {
               </DialogContent>
             </Dialog>
 
-            {/* Botão Criar Novo Clube / Liga */}
+            
             <Dialog open={openCreateModal} onOpenChange={setOpenCreateModal}>
               <DialogTrigger asChild>
                 <Button className="gap-2 font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
@@ -433,7 +420,7 @@ function GroupsPage() {
         </div>
       </div>
 
-      {/* Convite Card com Seleção de Liga */}
+      
       <div className="surface-card liquid-glow p-6 border-border/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">
@@ -482,7 +469,7 @@ function GroupsPage() {
         </div>
       </div>
 
-      {/* Grid de Grupos */}
+      
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -537,7 +524,7 @@ function GroupsPage() {
                     </span>
                   </div>
 
-                  {/* Barra de Progresso Coletiva */}
+                  
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                       <span>Aportes registrados no mês</span>
@@ -549,7 +536,7 @@ function GroupsPage() {
                   </div>
                 </div>
 
-                {/* Botões de Ação da Liga */}
+                
                 <div className="mt-5 pt-3.5 border-t border-border flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Button
@@ -580,7 +567,7 @@ function GroupsPage() {
                     </Button>
                   </div>
 
-                  {/* Botão de Chat estilo WhatsApp do Grupo */}
+                  
                   <Button
                     size="sm"
                     onClick={() => abrirChatWhatsapp(g)}
@@ -597,7 +584,7 @@ function GroupsPage() {
         </div>
       </div>
 
-      {/* Liga dos Amigos */}
+      
       <div className="surface-card p-6 border-border/80">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -641,9 +628,7 @@ function GroupsPage() {
         </div>
       </div>
 
-      {/* ==========================================
-          MODAL ESTILO WHATSAPP DO CHAT DA LIGA
-         ========================================== */}
+      
       <Dialog
         open={!!selectedChatGroup}
         onOpenChange={(open) => {
@@ -651,7 +636,7 @@ function GroupsPage() {
         }}
       >
         <DialogContent className="max-w-2xl w-[95vw] h-[680px] max-h-[92vh] p-0 flex flex-col rounded-2xl overflow-hidden bg-[#0B141A] border-[#222E35] text-foreground shadow-2xl">
-          {/* WhatsApp Header */}
+          
           {selectedChatGroup && (
             <div className="bg-[#202C33] border-b border-[#2A3942] px-4 py-3 flex items-center justify-between text-foreground shrink-0 select-none">
               <div className="flex items-center gap-3 min-w-0">
@@ -701,9 +686,9 @@ function GroupsPage() {
             </div>
           )}
 
-          {/* WhatsApp Messages Feed */}
+          
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0B141A] selection:bg-emerald-500/30">
-            {/* Aviso de Grupo Seguro */}
+            
             <div className="flex justify-center my-1">
               <div className="bg-[#182229]/95 border border-emerald-500/20 text-[#8696A0] text-[11px] px-3.5 py-1.5 rounded-lg text-center max-w-md flex items-center gap-2 shadow-sm">
                 <Lock className="h-3.5 w-3.5 text-[#00A884] shrink-0" />
@@ -711,7 +696,7 @@ function GroupsPage() {
               </div>
             </div>
 
-            {/* Separador de Data */}
+            
             <div className="flex justify-center my-2">
               <span className="bg-[#182229] border border-[#222E35] text-[10px] font-bold text-[#8696A0] px-3 py-0.5 rounded-md uppercase tracking-wider">
                 Hoje
@@ -759,7 +744,7 @@ function GroupsPage() {
             <div ref={chatMessagesEndRef} />
           </div>
 
-          {/* Quick Shortcuts Chips (estilo WhatsApp sugestões rápidas) */}
+          
           <div className="bg-[#111B21] border-t border-[#2A3942]/60 px-3 py-2 flex items-center gap-2 overflow-x-auto scrollbar-none">
             {[
               "Fechei meu aporte do mês! 🚀",
@@ -777,7 +762,7 @@ function GroupsPage() {
             ))}
           </div>
 
-          {/* WhatsApp Input Footer */}
+          
           <div className="bg-[#202C33] border-t border-[#2A3942] p-3 flex items-center gap-2.5 shrink-0">
             <Input
               value={chatDraft}

@@ -12,7 +12,7 @@ class User(Base):
     senha_hash = Column(String(255), nullable=False)
     handle = Column(String(60), default="@investidor")
     initials = Column(String(10), default="US")
-    perfil_investidor = Column(String(50), default="moderado")  # conservador, moderado, arrojado
+    perfil_investidor = Column(String(50), default="moderado")
     renda_mensal = Column(Float, default=5000.0)
     idade = Column(Integer, default=30)
     patrimonio_estimado = Column(Float, default=50000.0)
@@ -30,7 +30,6 @@ class User(Base):
     alertas_volatilidade = Column(Boolean, default=True)
     data_cadastro = Column(DateTime, default=datetime.utcnow)
 
-    # Relacionamentos
     questionarios = relationship("Questionario", back_populates="usuario", cascade="all, delete-orphan")
     carteira_itens = relationship("CarteiraItem", back_populates="usuario", cascade="all, delete-orphan")
     posts = relationship("Post", back_populates="usuario", cascade="all, delete-orphan")
@@ -60,7 +59,7 @@ class CarteiraItem(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     ticker = Column(String(20), nullable=False)
     nome = Column(String(120), nullable=True)
-    classe = Column(String(50), default="Ação")  # Renda Fixa, FII, Ação, ETF
+    classe = Column(String(50), default="Ação")
     percentual = Column(Float, default=0.0)
     preco_medio = Column(Float, default=0.0)
     quantidade = Column(Float, default=0.0)
@@ -80,7 +79,7 @@ class Post(Base):
     autor_initials = Column(String(10), default="US")
     autor_badge = Column(String(80), default="Investidor")
     conteudo = Column(Text, nullable=False)
-    tag = Column(String(40), default="Aporte")  # Aporte, Análise, Liga, Dúvida
+    tag = Column(String(40), default="Aporte")
     comprovante = Column(Boolean, default=False)
     comprovante_url = Column(Text, nullable=True)
     likes = Column(Integer, default=0)
@@ -138,7 +137,7 @@ class Notificacao(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     actor_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    tipo = Column(String(30), nullable=False)  # seguir, comentario, reacao, compartilhamento
+    tipo = Column(String(30), nullable=False)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=True)
     lida = Column(Boolean, default=False)
     data_criacao = Column(DateTime, default=datetime.utcnow)
@@ -174,7 +173,7 @@ class ChatLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    role = Column(String(20), nullable=False)  # user, assistant
+    role = Column(String(20), nullable=False)
     mensagem = Column(Text, nullable=False)
     modelo_utilizado = Column(String(100), nullable=True)
     data_criacao = Column(DateTime, default=datetime.utcnow)
@@ -190,4 +189,3 @@ class GrupoMensagem(Base):
     autor_initials = Column(String(10), default="IN")
     mensagem = Column(Text, nullable=False)
     data_criacao = Column(DateTime, default=datetime.utcnow)
-

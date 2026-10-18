@@ -24,7 +24,6 @@ class MarketService:
         self._load_catalog()
 
     def _load_catalog(self):
-        """Carrega o catálogo completo de ativos extraídos da base de dados da B3."""
         if CATALOG_PATH.exists():
             try:
                 import json
@@ -45,7 +44,6 @@ class MarketService:
                 print(f"[MarketService] Aviso ao gerar catálogo inicial: {e}")
 
     def _load_or_train_model(self):
-        """Carrega modelo treinado ou inicializa modelo pré-treinado básico."""
         if MODEL_PATH.exists():
             try:
                 self.model = joblib.load(MODEL_PATH)
@@ -56,13 +54,9 @@ class MarketService:
             print("[MarketService] Modelo não encontrado em models/xgboost.pkl. Treinamento sob demanda disponível.")
 
     def obter_dados_ativo(self, ticker: str) -> Dict[str, Any]:
-        """
-        Retorna indicadores quantitativos, cotação e predição do modelo para um ticker.
-        """
         ticker_limpo = ticker.upper().replace(".SA", "").strip()
         ticker_yf = f"{ticker_limpo}.SA"
 
-        # Tentar buscar da base local consolidada primeiro
         df_ativo = None
         if DATASET_PATH.exists():
             try:
@@ -72,7 +66,6 @@ class MarketService:
             except Exception as e:
                 print(f"[MarketService] Aviso ao ler dataset_final.parquet: {e}")
 
-        # Se não estiver no dataset local ou estiver vazio, busca do Yahoo Finance
         if df_ativo is None or df_ativo.empty:
             try:
                 print(f"[MarketService] Baixando histórico recente de {ticker_yf} via yfinance...")
@@ -92,10 +85,8 @@ class MarketService:
                 print(f"[MarketService] Erro ao buscar yfinance para {ticker}: {e}")
 
         if df_ativo is None or df_ativo.empty:
-            # Fallback com dados padrão estimados
             return self._dados_default(ticker_limpo)
 
-        # Cálculo dos indicadores técnicos
         df_ativo = df_ativo.sort_values("data").reset_index(drop=True)
         close = df_ativo["preco_fechamento"]
 
@@ -119,7 +110,6 @@ class MarketService:
         momentum_63 = float(close.pct_change(63).iloc[-1]) if len(close) >= 63 else float(retorno.sum())
         if pd.isna(momentum_63): momentum_63 = 0.0
 
-        # RSI (14)
         delta = close.diff()
         ganho = delta.clip(lower=0).rolling(14).mean()
         perda = (-delta.clip(upper=0)).rolling(14).mean()
@@ -133,7 +123,6 @@ class MarketService:
             if not pd.isna(val_s) and val_s > 0:
                 selic_anual = float(val_s if val_s > 1 else val_s * 100)
 
-        # Inferência de Machine Learning (XGBoost ou Score Quantitativo)
         features_dict = {
             "ma_21_dist": ma_21_dist,
             "ma_50_dist": ma_50_dist,
@@ -146,7 +135,6 @@ class MarketService:
 
         prob_ml = self._calcular_probabilidade_ml(features_dict)
 
-        # Regra de Decisão Baseada na Assimetria Estatística
         limite_corte = 0.465
         if prob_ml >= limite_corte * 1.05:
             decisao = "COMPRA"
@@ -178,18 +166,15 @@ class MarketService:
         }
 
     def _calcular_probabilidade_ml(self, features: Dict[str, float]) -> float:
-        """Executa a predição no modelo XGBoost carregado ou cálculo ponderado."""
         if self.model is not None:
             try:
                 X_df = pd.DataFrame([features])
-                # Tentar prever caso as colunas batam
                 if hasattr(self.model, "predict_proba"):
                     probs = self.model.predict_proba(X_df)
                     return float(probs[0, 1])
             except Exception as e:
                 pass
 
-        # Cálculo Heurístico Quantitativo Robusto (Alinhado com a tese do TCC)
         score_base = 0.45
         if features["ma_21_dist"] > 0: score_base += 0.03
         if features["ma_50_dist"] > 0: score_base += 0.02
@@ -223,7 +208,6 @@ class MarketService:
         search: Optional[str] = None,
         classe: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """Retorna os ativos cobertos na plataforma a partir da base real da B3."""
         if not self.catalog:
             self._load_catalog()
 

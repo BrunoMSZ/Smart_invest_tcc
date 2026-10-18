@@ -111,7 +111,6 @@ function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Progresso de pontos */}
         <div className="surface-card p-4 sm:p-5">
           <h2 className="text-sm font-semibold mb-3">Evolução de pontos</h2>
           <div className="h-56">
@@ -136,7 +135,6 @@ function DashboardPage() {
           </div>
         </div>
 
-        {/* Alocação sugerida */}
         <div className="surface-card p-4 sm:p-5">
           <h2 className="text-sm font-semibold mb-3">
             Alocação sugerida · {userProfile.perfil_investidor || "moderado"}
@@ -179,7 +177,6 @@ function DashboardPage() {
           </ul>
         </div>
 
-        {/* Ranking */}
         <div className="surface-card p-4 sm:p-5">
           <h2 className="text-sm font-semibold mb-3">Ranking da liga (pontos)</h2>
           <div className="h-56">
@@ -197,7 +194,6 @@ function DashboardPage() {
           </div>
         </div>
 
-        {/* Mercado */}
         <div className="surface-card p-4 sm:p-5">
           <h2 className="text-sm font-semibold mb-3">Variação dos ativos em destaque (%)</h2>
           <div className="h-56">
@@ -219,7 +215,6 @@ function DashboardPage() {
           </div>
         </div>
 
-        {/* Série de preço exemplo */}
         <div className="surface-card p-4 sm:p-5 lg:col-span-2">
           <h2 className="text-sm font-semibold mb-3">Referência de preço · série recente</h2>
           <div className="h-64">

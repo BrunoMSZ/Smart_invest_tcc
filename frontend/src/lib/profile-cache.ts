@@ -4,7 +4,6 @@ const PROFILE_CACHE_KEY = "smartinvest_profile_cache";
 const AVATAR_CACHE_KEY = "smartinvest_avatar_cache";
 export const PROFILE_UPDATED_EVENT = "smartinvest:profile-updated";
 
-/** Fallback em memória quando o localStorage não aguenta data URL grande */
 let memoryAvatar: string | null = null;
 let memoryProfile: UserProfile | null = null;
 
@@ -51,7 +50,6 @@ export function cacheAvatarAlone(dataUrl: string | null | undefined) {
     if (dataUrl) localStorage.setItem(AVATAR_CACHE_KEY, dataUrl);
     else localStorage.removeItem(AVATAR_CACHE_KEY);
   } catch {
-    // Quota: mantém só em memória — o chat ainda enxerga via event/memory
   }
 }
 
@@ -68,7 +66,6 @@ export function writeCachedProfile(profile: UserProfile): void {
   };
 
   try {
-    // Perfil sem data URL pesada; avatar fica em chave separada / memória
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(stripAvatar(profile)));
   } catch {
     try {
@@ -80,9 +77,7 @@ export function writeCachedProfile(profile: UserProfile): void {
           bio: profile.bio,
         }),
       );
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   window.dispatchEvent(

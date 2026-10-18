@@ -131,7 +131,6 @@ async function parseErrorMessage(res: Response): Promise<string> {
     if (Array.isArray(body.detail) && body.detail[0]?.msg) return body.detail[0].msg;
     if (body.message) return body.message;
   } catch {
-    /* ignore */
   }
   return res.statusText || `Erro HTTP ${res.status}`;
 }
@@ -281,6 +280,23 @@ export const api = {
 
   async getMarketTicker() {
     return request<MarketTickerItem[]>("/api/market/ticker", {}, false);
+  },
+
+  async getNews(ticker?: string, limit: number = 15) {
+    const query = new URLSearchParams();
+    if (ticker) query.set("ticker", ticker);
+    if (limit) query.set("limit", String(limit));
+    const qs = query.toString();
+    return request<Array<{
+      id: string;
+      titulo: string;
+      summary: string;
+      fonte: string;
+      data: string;
+      sentiment: "Positivo" | "Neutro" | "Negativo";
+      sentiment_score: number;
+      link: string;
+    }>>(`/api/news${qs ? `?${qs}` : ""}`, {}, false);
   },
 
   async getHomeDashboard() {

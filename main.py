@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import joblib
 
-# Inicializa paths
 _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -26,27 +25,18 @@ from backend.services.market_service import market_service
 
 
 def main():
-    print("==========================================================")
-    print("      SMARTINVEST AI - SISTEMA DE IA & ML FINANCEIRO      ")
-    print("==========================================================")
+    print("SMARTINVEST AI - SISTEMA DE IA & ML FINANCEIRO")
 
-    # =========================
-    # 1. LOAD DATASET
-    # =========================
     print("\n[*] 1. Carregando base de dados histórica da B3...")
     df = load_data()
     print(f"[+] Dataset carregado com sucesso: {df.shape}")
 
-    # Separar em treino (até 2023) e teste (2024 em diante)
     df_train = df[df["data"].dt.year < 2024].copy()
     df_test = df[df["data"].dt.year >= 2024].copy()
 
     print(f"[+] Registros de Treino (até 2023): {df_train.shape[0]}")
     print(f"[+] Registros de Teste (2024+):     {df_test.shape[0]}")
 
-    # =========================
-    # 2. PREPARAÇÃO & TREINO
-    # =========================
     print("\n[*] 2. Preparando engenharia de features e setores...")
     df_train["market_sentiment"] = 0
     df_train = filter_data(df_train)
@@ -60,14 +50,10 @@ def main():
     print("\n[*] 3. Treinando modelo preditivo de ações (XGBoost)...")
     df_train, model_stock = train_stock_model(df_train)
 
-    # Salvar modelo treinado em models/xgboost.pkl
     model_path = MODELS_DIR / "xgboost.pkl"
     joblib.dump(model_stock, model_path)
-    print(f"[+] 🎉 Modelo XGBoost salvo com sucesso em: {model_path}")
+    print(f"[+] Modelo XGBoost salvo com sucesso em: {model_path}")
 
-    # =========================
-    # 3. AVALIAÇÃO EM TESTE (2024)
-    # =========================
     if not df_test.empty:
         print("\n[*] 4. Avaliando modelo na janela Out-of-Sample (Teste 2024)...")
         df_test["market_sentiment"] = 0
@@ -89,9 +75,6 @@ def main():
         df_test = evaluate_model_on_test(model_stock, df_test, features)
         df_test = gerar_score(df_test)
 
-    # =========================
-    # 4. RANKING MULTI-FATORIAL
-    # =========================
     print("\n" + "=" * 60)
     print("   TOP ATIVOS RECOMENDADOS - SCORE MULTI-FATORIAL")
     print("=" * 60)
@@ -99,14 +82,10 @@ def main():
     df_ranking = pd.DataFrame(ranking_top)
     print(df_ranking[["ticker", "nome", "score_final", "prob_ml", "decisao", "tendencia"]])
 
-    # Salvar relatório no diretório reports/
     caminho_csv = REPORTS_DIR / "ranking_top_ativos.csv"
     df_ranking.to_csv(caminho_csv, index=False, encoding="utf-8-sig")
     print(f"\n[+] Tabela de ranking exportada para: {caminho_csv}")
 
-    # =========================
-    # 5. TESTE DO ORQUESTRADOR OPENROUTER
-    # =========================
     print("\n[*] 5. Testando Orquestrador OpenRouter (Modelos Gratuitos)...")
     ticker_exemplo = "PETR4"
     dados_quant = market_service.obter_dados_ativo(ticker_exemplo)

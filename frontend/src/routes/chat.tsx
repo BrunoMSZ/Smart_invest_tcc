@@ -139,7 +139,6 @@ function ChatPage() {
   };
 
   useEffect(() => {
-    // 1) Cache local / memória (foto aparece mesmo antes da API)
     const cached = readCachedProfile();
     if (cached) applyProfile(cached);
     const alone =
@@ -160,13 +159,11 @@ function ChatPage() {
             try {
               await api.updateProfile({ avatar_url: smaller });
             } catch {
-              /* local ok */
             }
           }
         }
         applyProfile(dados);
       } catch {
-        /* ignore */
       }
     }
 
@@ -192,7 +189,6 @@ function ChatPage() {
     void loadProfile();
     void loadChatHistory();
 
-    // 2) Atualiza quando o perfil/foto mudar em qualquer lugar do app
     const onProfileUpdated = (e: Event) => {
       const detail = (e as CustomEvent<UserProfile>).detail;
       if (detail) applyProfile(detail);

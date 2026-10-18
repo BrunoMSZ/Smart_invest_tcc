@@ -8,21 +8,18 @@ from typing import Optional, Dict, Any
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "smartinvest-super-secret-production-key-2026-b3")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 7  # 7 dias
+ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 7
 
 
 def hash_password(password: str) -> str:
-    """Gera hash seguro da senha usando PBKDF2-HMAC-SHA256 com salt dinâmico."""
     salt = os.urandom(16)
     pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
     return salt.hex() + ":" + pwd_hash.hex()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica se a senha em texto plano confere com o hash salvo."""
     try:
         if ":" not in hashed_password:
-            # Fallback para hashes simples legado se houver
             return hashlib.sha256(plain_password.encode("utf-8")).hexdigest() == hashed_password
 
         salt_hex, pwd_hash_hex = hashed_password.split(":", 1)
@@ -44,7 +41,6 @@ def _base64_decode(data_str: str) -> bytes:
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[int] = None) -> str:
-    """Cria um token JWT assinado digitalmente com HMAC-SHA256."""
     to_encode = data.copy()
     expire_time = int(time.time()) + (expires_delta if expires_delta else ACCESS_TOKEN_EXPIRE_SECONDS)
     to_encode.update({"exp": expire_time})
@@ -64,7 +60,6 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[int] = Non
 
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
-    """Decodifica e valida o token JWT."""
     try:
         parts = token.split(".")
         if len(parts) != 3:
@@ -81,7 +76,6 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         payload_json = _base64_decode(payload_b64).decode('utf-8')
         payload = json.loads(payload_json)
 
-        # Checar expiração
         if "exp" in payload and payload["exp"] < int(time.time()):
             return None
 

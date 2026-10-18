@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-# Garante resolução de imports tanto de backend.* quanto diretos
 _ROOT = Path(__file__).resolve().parent.parent.parent
 _BACKEND = Path(__file__).resolve().parent.parent
 for _p in [str(_ROOT), str(_BACKEND)]:
@@ -50,7 +49,6 @@ except ImportError:
         otimizar_carteira_smartinvest
     )
 
-# Inicializa banco de dados e seed na subida
 init_db()
 
 app = FastAPI(
@@ -59,9 +57,6 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# ==========================================
-# CONFIGURAÇÃO DE CORS PARA O FRONTEND
-# ==========================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -71,14 +66,10 @@ app.add_middleware(
 )
 
 
-# ==========================================
-# HELPERS DE AUTENTICAÇÃO
-# ==========================================
 def get_current_user_optional(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """Retorna o usuário a partir do Header Bearer Token, ou o primeiro usuário (Rafael) se não autenticado."""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
         payload = decode_access_token(token)
@@ -86,7 +77,6 @@ def get_current_user_optional(
             user = db.query(User).filter(User.email == payload["sub"]).first()
             if user:
                 return user
-    # Fallback para o usuário padrão da plataforma para garantir funcionamento sem fricção
     return db.query(User).filter(User.email == "rafael@aporta.com").first() or db.query(User).first()
 
 
@@ -119,9 +109,6 @@ def format_user_response(user: User) -> Dict[str, Any]:
     }
 
 
-# ==========================================
-# MODELOS PYDANTIC DE REQUISIÇÃO E RESPOSTA
-# ==========================================
 class LoginRequest(BaseModel):
     email: str = Field(..., description="E-mail do usuário")
     senha: str = Field(..., description="Senha do usuário")
@@ -237,14 +224,10 @@ class GrupoMensagemCreateRequest(BaseModel):
 class CommentCreate(BaseModel):
     texto: str
 
-# ==========================================
-# ENDPOINTS DE AUTENTICAÇÃO E PERFIL
-# ==========================================
 
 @app.post("/api/auth/register")
 @app.post("/api/register")
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
-    """Cadastra um novo usuário no banco de dados com senha criptografada."""
     usuario_existente = db.query(User).filter(User.email == req.email.lower().strip()).first()
     if usuario_existente:
         raise HTTPException(
@@ -252,7 +235,6 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
             detail="Este email já está cadastrado no sistema."
         )
 
-    # Iniciais do nome
     partes = req.nome.strip().split()
     initials = (partes[0][0] + (partes[-1][0] if len(partes) > 1 else "")).upper()
     handle = "@" + req.nome.lower().replace(" ", "")
@@ -291,7 +273,6 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 @app.post("/login")
 @app.post("/")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
-    """Autentica o usuário no banco de dados e retorna JWT token."""
     email_limpo = req.email.lower().strip()
     user = db.query(User).filter(User.email == email_limpo).first()
 
@@ -318,7 +299,6 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/recover")
 def recover_password(req: RecoverPasswordRequest, db: Session = Depends(get_db)):
-    """Redefine a senha de uma conta existente a partir do e-mail."""
     email_limpo = req.email.lower().strip()
     user = db.query(User).filter(User.email == email_limpo).first()
     if not user:
@@ -343,7 +323,6 @@ def get_profile(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retorna os dados do perfil do usuário logado diretamente do banco de dados."""
     user = current_user
     if user_id and user_id.isdigit():
         target = db.query(User).filter(User.id == int(user_id)).first()
@@ -365,7 +344,6 @@ def update_profile(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Atualiza as informações cadastrais do perfil do usuário."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -423,24 +401,16 @@ def update_profile(
     }
 
 
-# ==========================================
-# ENDPOINT DE DASHBOARD & HOME DO MERCADO
-# ==========================================
 
 _TICKER_CACHE = None
 _TICKER_CACHE_TIME = 0
 
 @app.get("/api/market/ticker")
 def get_market_ticker():
-    """
-    Retorna as cotações em tempo real do carrossel 'B3 & Global Markets'.
-    Possui cache em memória de 3 minutos para não sobrecarregar requisições externas.
-    """
     global _TICKER_CACHE, _TICKER_CACHE_TIME
     import time
     agora = time.time()
 
-    # Cache de 3 minutos
     if _TICKER_CACHE and (agora - _TICKER_CACHE_TIME < 180):
         return _TICKER_CACHE
 
@@ -506,7 +476,6 @@ def get_market_ticker():
     except Exception as e:
         print(f"[MarketTicker] Aviso ao buscar cotações online: {e}")
 
-    # Adiciona Selic
     resultado.append({
         "symbol": "TAXA SELIC",
         "value": "10,50% a.a.",
@@ -514,7 +483,6 @@ def get_market_ticker():
         "up": True
     })
 
-    # Fallback seguro caso Yahoo Finance esteja offline
     if len(resultado) < 5:
         resultado = [
             {"symbol": "IBOVESPA", "value": "131.450 pts", "change": "+0.68%", "up": True},
@@ -543,15 +511,10 @@ def get_home_dashboard(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """
-    Retorna o resumo em tempo real do mercado financeiro, índices, destaques e status do usuário.
-    """
-    # 1. Notícias de destaque via NewsService
     noticias_destaque = news_service.buscar_noticias_ativo("IBOV", limite=3)
     if not noticias_destaque:
         noticias_destaque = news_service.buscar_noticias_ativo("PETR4", limite=3)
 
-    # 2. Ativos em alta calculados com base no MarketService
     acoes_cobertas = market_service.listar_ativos_disponiveis()
     acoes_resumo = []
     for at in acoes_cobertas[:6]:
@@ -583,9 +546,6 @@ def get_home_dashboard(
     }
 
 
-# ==========================================
-# QUESTIONÁRIO, SMART INVEST E CARTEIRAS
-# ==========================================
 
 @app.post("/api/questionario", response_model=SmartInvestResponse)
 @app.post("/api/smart-invest/optimize", response_model=SmartInvestResponse)
@@ -594,10 +554,6 @@ def enviar_questionario(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """
-    Recebe as respostas do questionário, classifica o perfil com K-Means,
-    calcula a alocação de Markowitz e persiste o histórico no banco de dados.
-    """
     if req.profile_override:
         perfil_info = {
             "perfil": req.profile_override.lower(),
@@ -614,7 +570,6 @@ def enviar_questionario(
 
     alocacao = otimizar_carteira_smartinvest(perfil_info["perfil"])
 
-    # Salva questionário no banco de dados
     if current_user:
         q_entry = Questionario(
             user_id=current_user.id,
@@ -646,7 +601,6 @@ def get_user_carteira(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retorna os ativos salvos da carteira do usuário."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -672,7 +626,6 @@ def salvar_item_carteira(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Adiciona ou atualiza um item na carteira do usuário."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -698,7 +651,6 @@ def remover_item_carteira(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Remove um item da carteira do usuário."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -715,9 +667,6 @@ def remover_item_carteira(
     return {"status": "sucesso", "message": "Item removido da carteira"}
 
 
-# ==========================================
-# COMUNIDADE, POSTS, LIKES E GRUPOS
-# ==========================================
 
 def _format_post_time(data_criacao: datetime) -> str:
     diff = datetime.utcnow() - data_criacao
@@ -781,7 +730,6 @@ def _serialize_post(p: Post, db: Session, include_shared: bool = True, following
     if include_shared and p.shared_from_post_id:
         original = db.query(Post).filter(Post.id == p.shared_from_post_id).first()
         if original:
-            # Evita nestar compartilhamentos em cascata
             nested = _serialize_post(original, db, include_shared=False, following_ids=following_ids)
             item["shared_post"] = nested
     return item
@@ -792,7 +740,6 @@ def listar_posts(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Retorna os posts da comunidade em ordem cronológica reversa."""
     following_ids = set()
     if current_user:
         following_ids = {
@@ -809,7 +756,6 @@ def criar_post(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Cria uma nova publicação no feed da comunidade e bonifica o usuário se houver comprovante."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -818,7 +764,6 @@ def criar_post(
         original = db.query(Post).filter(Post.id == shared_from_id).first()
         if not original:
             raise HTTPException(status_code=404, detail="Post original não encontrado.")
-        # Se o original já é um share, aponta para a raiz
         if original.shared_from_post_id:
             shared_from_id = original.shared_from_post_id
 
@@ -838,7 +783,6 @@ def criar_post(
     )
     db.add(novo_post)
 
-    # Bonificação por aporte com comprovante
     if req.comprovante:
         current_user.pontos += 1
         if current_user.pontos >= current_user.proximo_nivel_pontos:
@@ -864,7 +808,6 @@ def compartilhar_post(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Reposta um post no feed (com comentário opcional), estilo rede social."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -877,7 +820,6 @@ def compartilhar_post(
 
     comentario = (req.comentario or "").strip()
     tag = req.tag or root.tag or "Aporte"
-    # Conteúdo: se não houver comentário, marca como compartilhamento puro
     conteudo = comentario if comentario else f"Compartilhou a publicação de {root.autor_nome}"
 
     novo_post = Post(
@@ -913,7 +855,6 @@ def toggle_like_post(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Dá like ou desfaz like em uma postagem."""
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado.")
@@ -945,7 +886,6 @@ def listar_comentarios(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Retorna todos os comentários de uma postagem específica."""
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado.")
@@ -998,7 +938,6 @@ def adicionar_comentario(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Adiciona um comentário ao post."""
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post não encontrado.")
@@ -1037,7 +976,6 @@ def toggle_like_comentario(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Curte ou remove a curtida de um comentário."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 
@@ -1254,7 +1192,6 @@ def marcar_notificacoes_lidas(
 
 @app.get("/api/groups")
 def listar_grupos(db: Session = Depends(get_db)):
-    """Retorna a lista de ligas e grupos de investimento."""
     grupos = db.query(Grupo).all()
     return [
         {
@@ -1277,7 +1214,6 @@ def criar_grupo(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Cria um novo grupo/liga privada."""
     codigo = f"liga-{req.nome.lower().replace(' ', '-')[:12]}-{os.urandom(2).hex()}"
     novo_grupo = Grupo(
         nome=req.nome,
@@ -1310,7 +1246,6 @@ def entrar_grupo(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Permite a um investidor ingressar em uma liga por código de convite ou link."""
     codigo_limpo = req.codigo.strip()
     if "/" in codigo_limpo:
         codigo_limpo = codigo_limpo.split("/")[-1].strip()
@@ -1355,7 +1290,6 @@ def registrar_aporte_grupo(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Registra o aporte mensal do investidor na liga, atualizando o progresso coletivo."""
     gid = int(grupo_id.replace("g", "")) if (isinstance(grupo_id, str) and grupo_id.startswith("g")) else int(grupo_id)
     grupo = db.query(Grupo).filter(Grupo.id == gid).first()
     if not grupo:
@@ -1404,7 +1338,6 @@ def listar_mensagens_grupo(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retorna o histórico de mensagens do chat estilo WhatsApp da liga."""
     gid = int(grupo_id.replace("g", "")) if (isinstance(grupo_id, str) and grupo_id.startswith("g")) else int(grupo_id)
     grupo = db.query(Grupo).filter(Grupo.id == gid).first()
     if not grupo:
@@ -1412,7 +1345,6 @@ def listar_mensagens_grupo(
 
     mensagens = db.query(GrupoMensagem).filter(GrupoMensagem.grupo_id == gid).order_by(GrupoMensagem.id.asc()).all()
 
-    # Se não houver mensagens ainda, semeia mensagens iniciais realistas dos membros da liga
     if not mensagens:
         seed_msgs = [
             ("Marina Costa", "MC", f"Fala pessoal! Sejam bem-vindos ao grupo da {grupo.nome}! 🚀"),
@@ -1454,7 +1386,6 @@ def enviar_mensagem_grupo(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Envia uma nova mensagem no chat estilo WhatsApp da liga."""
     gid = int(grupo_id.replace("g", "")) if (isinstance(grupo_id, str) and grupo_id.startswith("g")) else int(grupo_id)
     grupo = db.query(Grupo).filter(Grupo.id == gid).first()
     if not grupo:
@@ -1490,7 +1421,6 @@ def enviar_mensagem_grupo(
 
 @app.get("/api/ranking/users")
 def get_user_gamification_ranking(db: Session = Depends(get_db)):
-    """Retorna o ranking de usuários por pontos e disciplina de aportes."""
     users = db.query(User).order_by(User.pontos.desc()).all()
     return [
         {
@@ -1506,14 +1436,10 @@ def get_user_gamification_ranking(db: Session = Depends(get_db)):
     ]
 
 
-# ==========================================
-# RANKING QUANTITATIVO, ATIVOS E ANÁLISE IA
-# ==========================================
 
 @app.get("/api/ranking")
 @app.get("/ranking")
 def obter_ranking(top_n: int = Query(default=10, ge=1, le=50)):
-    """Retorna o ranking quantitativo multi-fatorial de ações da B3."""
     try:
         return gerar_ranking_inteligente(top_n=top_n)
     except Exception as exc:
@@ -1526,28 +1452,18 @@ def listar_acoes(
     classe: Optional[str] = Query(default=None),
     limit: int = Query(default=250, ge=1, le=1000)
 ):
-    """Lista os ativos acompanhados com dados atualizados e setoriais da base real da B3."""
     return market_service.listar_ativos_disponiveis(limit=limit, search=search, classe=classe)
 
 
 @app.get("/api/analyze/{ticker}")
 def analisar_ativo_orquestrado(ticker: str):
-    """
-    Pipeline de Orquestração Quantitativo + NLP + OpenRouter:
-    1. Coleta dados quantitativos + indicadores técnicos + inferência XGBoost
-    2. Coleta notícias recentes e analisa sentimento FinBERT
-    3. OpenRouter (Modelos Gratuitos) sintetiza o parecer institucional executivo.
-    """
     ticker_upper = ticker.upper().strip()
 
-    # 1. Camada Quantitativa
     dados_quant = market_service.obter_dados_ativo(ticker_upper)
 
-    # 2. Camada de NLP
     noticias = news_service.buscar_noticias_ativo(ticker_upper, limite=5)
     sentimento_score = news_service.calcular_indice_humor(noticias)
 
-    # 3. Orquestração OpenRouter
     orquestracao = openrouter_service.orquestrar_analise_ativo(
         ticker=ticker_upper,
         dados_quantitativos=dados_quant,
@@ -1574,14 +1490,9 @@ def analisar_ativo_orquestrado(ticker: str):
 
 @app.get("/api/news")
 def obter_noticias_mercado(ticker: Optional[str] = None, limit: int = Query(default=10, ge=1, le=30)):
-    """Retorna as notícias recentes de mercado com sentimento classificado por FinBERT."""
     if ticker:
         return news_service.buscar_noticias_ativo(ticker, limite=limit)
-
-    noticias_gerais = []
-    for t in ["PETR4", "VALE3", "ITUB4"]:
-        noticias_gerais.extend(news_service.buscar_noticias_ativo(t, limite=3))
-    return noticias_gerais[:limit]
+    return news_service.buscar_noticias_mercado(limite=limit)
 
 
 @app.post("/api/chat", response_model=ChatResponse)
@@ -1590,7 +1501,6 @@ def chat_financeiro(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Endpoint de Chat com o Assistente OpenRouter (Modelos Gratuitos) e persistência de histórico."""
     contexto = None
     if req.ticker:
         try:
@@ -1615,7 +1525,6 @@ def chat_financeiro(
         contexto_investidor=contexto_investidor,
     )
 
-    # Persistir mensagem no histórico
     try:
         user_id = current_user.id if current_user else 1
         db.add(ChatLog(
@@ -1649,7 +1558,6 @@ def get_chat_history(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Retorna as mensagens recentes do chat gravadas no banco de dados."""
     user_id = current_user.id if current_user else 1
     logs = db.query(ChatLog).filter(
         (ChatLog.user_id == user_id) | (ChatLog.user_id.is_(None))
@@ -1670,7 +1578,6 @@ def get_chat_history(
 
 @app.get("/api/status")
 def status_health():
-    """Verifica a saúde do backend, banco de dados, modelos de ML e OpenRouter."""
     tem_openrouter = bool(OPENROUTER_API_KEY)
     tem_xgboost = (MODELS_DIR / "xgboost.pkl").exists()
     tem_dados = (DATA_DIR / "raw" / "dataset_final.parquet").exists()
@@ -1701,7 +1608,6 @@ def delete_post(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Exclui uma publicação somente se ela pertencer ao usuário logado."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Usuário não autenticado.")
 

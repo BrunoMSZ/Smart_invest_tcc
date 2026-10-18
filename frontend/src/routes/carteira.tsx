@@ -11,7 +11,6 @@ export const Route = createFileRoute("/carteira")({
   component: CarteiraPage,
 });
 
-// 1. CRIAMOS UM TIPO PARA ENSINAR O TYPESCRIPT O QUE É UM ATIVO
 type Ativo = {
   id: string;
   nome: string;
@@ -19,7 +18,6 @@ type Ativo = {
   percentual: number;
 };
 
-// 2. TIPAMOS O OBJETO (Record<string, Ativo[]>)
 const carteirasSugeridas: Record<string, Ativo[]> = {
   conservador: [
     { id: "1", nome: "Tesouro Selic 2027", tipo: "Renda Fixa", percentual: 60 },
@@ -54,7 +52,6 @@ const coresPorTipo: Record<string, string> = {
 function CarteiraPage() {
   const [perfil, setPerfil] = useState("moderado");
   
-  // 3. GARANTIMOS O TIPO NO USESTATE E UM ARRAY VAZIO COMO SEGURANÇA (|| [])
   const [ativos, setAtivos] = useState<Ativo[]>(carteirasSugeridas["moderado"] || []);
 
   const totalPercentual = useMemo(() => {
@@ -65,7 +62,6 @@ function CarteiraPage() {
 
   const handleMudarPerfil = (novoPerfil: string) => {
     setPerfil(novoPerfil);
-    // 4. PREVINE ERRO NO SPREAD SE O PERFIL NÃO EXISTIR
     setAtivos([...(carteirasSugeridas[novoPerfil] || [])]);
     toast.info(`Carteira rebalanceada para o perfil ${novoPerfil.charAt(0).toUpperCase() + novoPerfil.slice(1)}`);
   };

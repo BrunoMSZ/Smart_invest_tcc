@@ -99,7 +99,7 @@ function MarketPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      {/* Header Liquid Style */}
+      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-2">
@@ -122,7 +122,7 @@ function MarketPage() {
         )}
       </div>
 
-      {/* Mini Stats Banner Liquid */}
+      
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="surface-card p-3.5 border-border/80">
           <p className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wider">Ativos Monitorados</p>
@@ -146,7 +146,7 @@ function MarketPage() {
         </div>
       </div>
 
-      {/* Input de Busca com Estilo Liquid */}
+      
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -193,7 +193,7 @@ function MarketPage() {
         )}
       </div>
 
-      {/* Filter Tabs */}
+      
       <div className="flex flex-wrap items-center gap-2 border-b border-border/80 pb-3">
         <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mr-2">
           <Filter className="h-3.5 w-3.5 text-primary" />
@@ -215,7 +215,7 @@ function MarketPage() {
         ))}
       </div>
 
-      {/* Asset Cards Grid */}
+      
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">

@@ -141,7 +141,6 @@ function AssetPage() {
         </div>
       </header>
 
-      {/* Gráfico Liquid Style */}
       <div className="surface-card p-4 sm:p-6 border-border/80">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/5">
           <div className="flex items-center gap-2">
@@ -213,7 +212,6 @@ function AssetPage() {
         </div>
       </div>
 
-      {/* Indicadores Técnicos & Score de IA */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="surface-card p-5">
           <p className="text-sm font-semibold">Indicadores técnicos & quantitativos</p>
@@ -258,7 +256,6 @@ function AssetPage() {
         </div>
       </div>
 
-      {/* Parecer do OpenRouter (Orquestrador) */}
       <div className="surface-card p-5 sm:p-6 border border-primary/20 bg-surface-1/60">
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2.5">
@@ -307,7 +304,6 @@ function AssetPage() {
         </div>
       </div>
 
-      {/* Manchetes Analisadas pelo NLP */}
       {noticias.length > 0 && (
         <div className="surface-card p-5">
           <div className="flex items-center gap-2 mb-3">

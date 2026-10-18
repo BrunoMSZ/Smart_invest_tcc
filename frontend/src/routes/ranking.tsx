@@ -41,7 +41,6 @@ function RankingPage() {
   const carregarDados = () => {
     setLoadingStocks(true);
 
-    // 1. Ranking Quantitativo de Ações
     api.getStockRanking(10)
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -53,7 +52,6 @@ function RankingPage() {
       })
       .finally(() => setLoadingStocks(false));
 
-    // 2. Ranking de Usuários
     api.getUserRanking()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -64,7 +62,6 @@ function RankingPage() {
         console.log("Fallback user ranking:", err);
       });
 
-    // 3. Perfil do Usuário
     api.getProfile()
       .then((res) => {
         if (res?.dados) {
@@ -82,7 +79,7 @@ function RankingPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      {/* Liquid Header */}
+      
       <div className="surface-card p-6 border-border/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -177,7 +174,7 @@ function RankingPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: TOP AÇÕES POR IA */}
+        
         <TabsContent value="acoes" className="mt-4">
           <div className="surface-card divide-y divide-border overflow-hidden">
             <div className="p-4 bg-surface-2/30 flex items-center justify-between">
@@ -247,7 +244,7 @@ function RankingPage() {
           </div>
         </TabsContent>
 
-        {/* TAB 2: LIGA DE USUÁRIOS */}
+        
         <TabsContent value="ranking" className="mt-4">
           <div className="surface-card divide-y divide-border overflow-hidden">
             {userRanking.map((r) => (
@@ -283,7 +280,7 @@ function RankingPage() {
           </div>
         </TabsContent>
 
-        {/* TAB 3: CONQUISTAS */}
+        
         <TabsContent value="badges" className="mt-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {defaultBadges.map((b) => (

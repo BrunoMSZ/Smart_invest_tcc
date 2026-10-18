@@ -59,7 +59,6 @@ export function UploadProofDialog({
         etf: "ETFs",
       };
       
-      // Se o usuário não digitar nada, usamos o texto padrão. Se digitar, usamos o texto dele!
       const textoPadrao = `Aporte mensal realizado com sucesso no valor de R$ ${valor || "1.500,00"} em ${classeNomeMap[classe]}. Mantendo a consistência rumo à independência financeira! 🚀`;
       const textoFinal = mensagem.trim() !== "" ? mensagem : textoPadrao;
 
@@ -74,7 +73,6 @@ export function UploadProofDialog({
         description: "+1 ponto e aporte registrado no banco de dados.",
       });
 
-      // Limpa os campos depois de enviar
       setOpen(false);
       setFileName(null);
       setFileBase64(null);
@@ -132,7 +130,7 @@ export function UploadProofDialog({
             />
           </label>
 
-          {/* NOVO CAMPO: MENSAGEM DO USUÁRIO */}
+          
           <div className="space-y-1.5">
             <Label htmlFor="mensagem">O que você quer compartilhar?</Label>
             <textarea

@@ -12,11 +12,6 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
 class OpenRouterClient:
-    """
-    Cliente para integração com a API do OpenRouter utilizando EXCLUSIVAMENTE
-    modelos GRATUITOS (:free tier), com sistema de fallback automático em cascata.
-    """
-
     def __init__(self, api_key: Optional[str] = None, custom_models: Optional[List[str]] = None):
         self._custom_key = api_key
         self._custom_models = custom_models
@@ -53,9 +48,6 @@ class OpenRouterClient:
         temperature: float = 0.4,
         max_tokens: int = 1500
     ) -> Dict[str, Any]:
-        """
-        Executa chamada aos modelos gratuitos do OpenRouter com fallback automático.
-        """
         current_key = self.api_key
         if not current_key or not current_key.strip():
             return {
@@ -88,12 +80,10 @@ class OpenRouterClient:
                     msg_obj = choice.get("message", {})
                     conteudo = msg_obj.get("content")
 
-                    # Se o conteúdo estiver vazio mas houver reasoning, usa o reasoning
                     if not conteudo and msg_obj.get("reasoning"):
                         conteudo = msg_obj.get("reasoning")
 
                     if conteudo and str(conteudo).strip():
-                        # Limpar tags de pensamento tipo <think>...</think> se presentes
                         conteudo_limpo = re.sub(r"<think>.*?</think>", "", str(conteudo), flags=re.DOTALL).strip()
                         return {
                             "sucesso": True,
@@ -108,7 +98,6 @@ class OpenRouterClient:
                 erros.append(f"Falha ao chamar {model_name}: {str(exc)}")
                 continue
 
-        # Se todos os modelos gratuitos falharem (por instabilidade do OpenRouter ou rate limit)
         return {
             "sucesso": False,
             "modelo_utilizado": "fallback_local",
@@ -124,11 +113,6 @@ class OpenRouterClient:
         noticias: List[Dict[str, Any]],
         sentimento_nlp: float
     ) -> Dict[str, Any]:
-        """
-        Orquestra a síntese preditiva unindo:
-        1. Modelo Quantitativo de ML (XGBoost / Preço / Indicadores / Selic)
-        2. Modelo de NLP (FinBERT / Notícias recentes)
-        """
         noticias_formatadas = "\n".join([
             f"- [{n.get('data', 'Recente')}] {n.get('titulo', '')} (Fonte: {n.get('fonte', 'Mercado')})"
             for n in noticias[:5]
@@ -192,10 +176,6 @@ Por favor, elabore um parecer executivo para o ativo **{ticker.upper()}** cruzan
         contexto_mercado: Optional[Dict[str, Any]] = None,
         contexto_investidor: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """
-        Responde a dúvidas do usuário no chat (tanto sobre ativos específicos quanto finanças gerais).
-        """
-        # Se o usuário mencionou um ticker no texto (ex: BBSE3, PETR4, VALE3, etc.)
         ticker_detectado = self._detectar_ticker(mensagem_usuario)
         if ticker_detectado and not contexto_mercado:
             try:
@@ -260,14 +240,12 @@ Por favor, elabore um parecer executivo para o ativo **{ticker.upper()}** cruzan
         }
 
     def _detectar_ticker(self, texto: str) -> Optional[str]:
-        """Detecta se há um ticker da B3 na mensagem (ex: BBSE3, PETR4, MXRF11)."""
         match = re.search(r"\b([A-Z]{4}(?:3|4|5|6|11))\b", texto.upper())
         if match:
             return match.group(1)
         return None
 
     def _gerar_resposta_fallback_sem_chave(self, messages: List[Dict[str, str]]) -> str:
-        """Gera resposta heurística contextual quando o OpenRouter não estiver disponível."""
         last_user_msg = ""
         for m in reversed(messages):
             if m.get("role") == "user":
@@ -332,5 +310,4 @@ Por favor, elabore um parecer executivo para o ativo **{ticker.upper()}** cruzan
         )
 
 
-# Instância global compartilhada
 openrouter_service = OpenRouterClient()

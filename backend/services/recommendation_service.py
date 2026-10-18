@@ -12,13 +12,10 @@ except ImportError:
 
 
 def classificar_perfil_investidor(idade: int, renda: float, tolerancia_risco: int) -> Dict[str, Any]:
-    """
-    Clusterização de Investidores via K-Means (Módulo 1 do SmartInvest Pipeline).
-    """
     X_treino = np.array([
-        [25, 3000, 8], [30, 4000, 7], [22, 2000, 9],   # Jovens/Arrojados (Cluster 0)
-        [45, 10000, 4], [50, 12000, 3], [40, 8000, 5], # Meia-idade/Moderados (Cluster 1)
-        [65, 5000, 2], [70, 6000, 1], [60, 4000, 3]    # Conservadores (Cluster 2)
+        [25, 3000, 8], [30, 4000, 7], [22, 2000, 9],
+        [45, 10000, 4], [50, 12000, 3], [40, 8000, 5],
+        [65, 5000, 2], [70, 6000, 1], [60, 4000, 3]
     ])
 
     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
@@ -48,7 +45,6 @@ def classificar_perfil_investidor(idade: int, renda: float, tolerancia_risco: in
         }
     }
 
-    # Fallback por tolerância a risco explícita se discrepante
     if tolerancia_risco >= 8:
         return perfis[0]
     elif tolerancia_risco <= 3:
@@ -57,10 +53,6 @@ def classificar_perfil_investidor(idade: int, renda: float, tolerancia_risco: in
 
 
 def otimizar_carteira_smartinvest(perfil: str) -> List[Dict[str, Any]]:
-    """
-    Gera alocação recomendada de classes de ativos e pesos da carteira
-    baseado na Teoria Moderna de Portfólio de Markowitz.
-    """
     alocacoes_base = {
         "conservador": [
             {"name": "Renda Fixa (CDI / Selic)", "value": 70, "classe": "Renda Fixa"},
