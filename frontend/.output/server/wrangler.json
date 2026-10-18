@@ -1,11 +1,11 @@
 {
-  "compatibility_date": "2026-09-16",
+  "compatibility_date": "2026-10-15",
   "main": "index.mjs",
   "assets": {
     "binding": "ASSETS",
     "directory": "..\\public"
   },
-  "name": "tanstack-start-ts",
+  "name": "brunomsz-smart-invest-tcc-frontend",
   "compatibility_flags": [
     "nodejs_compat"
   ],

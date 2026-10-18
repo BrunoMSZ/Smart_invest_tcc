@@ -1,7 +1,7 @@
 import { i as __toESM, t as __commonJSMin } from "../../_runtime.mjs";
 import { l as require_react_dom, u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { o as require_jsx_runtime } from "../@radix-ui/react-collection+[...].mjs";
 import { r as parseHref } from "../tanstack__history.mjs";
+import { o as require_jsx_runtime } from "../@radix-ui/react-collection+[...].mjs";
 import { PassThrough, Readable } from "node:stream";
 import { ReadableStream as ReadableStream$1 } from "node:stream/web";
 //#region node_modules/@tanstack/react-router/dist/esm/utils.js
@@ -3577,12 +3577,11 @@ var BaseRootRoute = class extends BaseRoute {
 };
 //#endregion
 //#region node_modules/@tanstack/router-core/dist/esm/ssr/constants.js
-var import_jsx_runtime = require_jsx_runtime();
-require_react_dom();
 var GLOBAL_TSR = "$_TSR";
 var TSR_SCRIPT_BARRIER_ID = "$tsr-stream-barrier";
 //#endregion
 //#region node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js
+var import_jsx_runtime = require_jsx_runtime();
 function CatchBoundary(props) {
 	const errorComponent = props.errorComponent ?? ErrorComponent;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CatchBoundaryImpl, {
@@ -4257,8 +4256,7 @@ function useRouteContext(opts) {
 		select: (match) => opts.select ? opts.select(match.context) : match.context
 	});
 }
-//#endregion
-//#region node_modules/@tanstack/react-router/dist/esm/link.js
+require_react_dom();
 /**
 * Build anchor-like props for declarative navigation and preloading.
 *

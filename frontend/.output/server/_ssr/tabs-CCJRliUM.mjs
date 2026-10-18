@@ -1,7 +1,7 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { o as require_jsx_runtime } from "../_libs/@radix-ui/react-collection+[...].mjs";
-import { m as cn } from "./router-B3F8OG1u2.mjs";
+import { l as cn } from "./router-DXaEnHwP.mjs";
 import { i as Trigger, n as List, r as Root2, t as Content } from "../_libs/radix-ui__react-tabs.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/tabs-CCJRliUM.js
 var import_react = /* @__PURE__ */ __toESM(require_react());

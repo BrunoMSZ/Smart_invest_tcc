@@ -7,46 +7,6 @@ function record(error) {
 		at: Date.now()
 	};
 }
-var CAUSE_DEPTH_LIMIT = 5;
-var DESCRIPTION_LENGTH_LIMIT = 8e3;
-function describeError(error) {
-	const parts = [];
-	let current = error;
-	for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
-		if (!(current instanceof Error)) {
-			parts.push(typeof current === "string" ? current : safeStringify(current));
-			break;
-		}
-		const label = depth === 0 ? "" : "caused by: ";
-		const status = describeStatus(current);
-		parts.push(`${label}${current.stack ?? `${current.name}: ${current.message}`}${status}`);
-		current = current.cause;
-	}
-	return parts.join("\n").slice(0, DESCRIPTION_LENGTH_LIMIT);
-}
-function describeStatus(error) {
-	const { status, statusCode } = error;
-	const value = status ?? statusCode;
-	return typeof value === "number" ? ` (status ${value})` : "";
-}
-function safeStringify(value) {
-	try {
-		return JSON.stringify(value) ?? String(value);
-	} catch {
-		return String(value);
-	}
-}
-function isErrorLike(value) {
-	return value instanceof Error;
-}
-var originalConsoleError = console.error.bind(console);
-console.error = (...args) => {
-	originalConsoleError(...args.map((arg) => {
-		if (!isErrorLike(arg)) return arg;
-		record(arg);
-		return describeError(arg);
-	}));
-};
 if (typeof globalThis.addEventListener === "function") {
 	globalThis.addEventListener("error", (event) => record(event.error ?? event));
 	globalThis.addEventListener("unhandledrejection", (event) => record(event.reason));
@@ -62,38 +22,60 @@ function consumeLastCapturedError() {
 	return error;
 }
 function renderErrorPage() {
-	return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>This page didn't load</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
-      .card { max-width: 28rem; width: 100%; text-align: center; padding: 2rem; }
-      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
-      p { color: #4b5563; margin: 0 0 1.5rem; }
-      .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      .primary { background: #111; color: #fff; }
-      .secondary { background: #fff; color: #111; border-color: #d1d5db; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>This page didn't load</h1>
-      <p>Something went wrong on our end. You can try refreshing or head back home.</p>
-      <div class="actions">
-        <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
-      </div>
+	return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Erro — SmartInvest</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f6f7f9;
+      color: #111827;
+    }
+    main {
+      max-width: 28rem;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+    p { margin: 0 0 1.5rem; color: #4b5563; line-height: 1.5; }
+    .actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    button, a {
+      appearance: none;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+      padding: 0.55rem 1rem;
+      border-radius: 0.5rem;
+      font: inherit;
+      cursor: pointer;
+    }
+    button { background: #111827; color: #fff; border-color: #111827; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Algo deu errado</h1>
+    <p>Não foi possível carregar esta página. Tente novamente ou volte ao início.</p>
+    <div class="actions">
+      <button type="button" onclick="location.reload()">Tentar de novo</button>
+      <a href="/">Ir para o início</a>
     </div>
-  </body>
+  </main>
+</body>
 </html>`;
 }
 var serverEntryPromise;
 async function getServerEntry() {
-	if (!serverEntryPromise) serverEntryPromise = import("./server-k5Eu4H3H.mjs").then((n) => n.t).then((m) => m.default ?? m);
+	if (!serverEntryPromise) serverEntryPromise = import("./server-DNzyE_si.mjs").then((n) => n.t).then((m) => m.default ?? m);
 	return serverEntryPromise;
 }
 async function normalizeCatastrophicSsrResponse(response) {
